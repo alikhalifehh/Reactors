@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
-  
   const images = [
     "/src/assets/book.jpg",
     "/src/assets/book2.jpg",
@@ -14,12 +14,10 @@ export default function HomePage() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
     }, 7000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -59,14 +57,17 @@ export default function HomePage() {
           Track, manage, and enjoy your reading journey.  
           Discover books, build your reading list, and never lose track of your progress!
         </p>
-        <button
+
+        {/* ✅ Replaced button with Link to /books */}
+        <Link
+          to="/books"
           className="px-10 py-5 text-white text-xl font-bold rounded-2xl shadow-xl hover:scale-110 transition-transform"
           style={{ backgroundColor: "#5412B" }}
           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#B4182D")}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#631730ff")}
         >
           Explore Books
-        </button>
+        </Link>
 
         {/* Features Section (Circular) */}
         <section className="flex justify-center gap-8 mt-20">
