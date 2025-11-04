@@ -1,38 +1,51 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { books as seed } from "../data/books";
+import { books as seed } from "../data/books"; // keep the base 12 books
 
 export default function BooksList() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [user, setUser] = useState(null);
+  const [allBooks, setAllBooks] = useState([]);
 
+  // ✅ Load user + merge seed + global books
+  useEffect(() => {
+    const logged =
+      JSON.parse(localStorage.getItem("loggedInUser")) ||
+      JSON.parse(sessionStorage.getItem("loggedInUser"));
+    setUser(logged || null);
+
+    const globalList = JSON.parse(localStorage.getItem("global_books")) || [];
+    const merged = [...seed, ...globalList]; // merge built-in + added books
+    setAllBooks(merged);
+  }, []);
+
+  // ✅ Filter logic
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return seed.filter((b) => {
+    return allBooks.filter((b) => {
       const matchesText =
         !q || `${b.title} ${b.author} ${b.genre}`.toLowerCase().includes(q);
-      const matchesStatus = status === "all" ? true : b.status === status;
+      const matchesStatus =
+        status === "all"
+          ? true
+          : (b.status || "").toLowerCase() === status.toLowerCase();
       return matchesText && matchesStatus;
     });
-  }, [query, status]);
+  }, [query, status, allBooks]);
 
   return (
     <div
       className="min-h-screen bg-cover bg-center relative"
-      style={{
-        backgroundColor: "#631730ff",
-      }}
+      style={{ backgroundColor: "#631730ff" }}
     >
-      {/* Optional slight overlay to keep consistent style */}
       <div className="absolute inset-0 bg-black/10" />
 
-      {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto p-4 text-white">
-        {/* ⬇️ Added a soft panel behind controls for contrast */}
-        <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center p-3 rounded-lg">
+        {/* 🔍 Search + Filter */}
+        <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center p-3 rounded-lg">
           <div className="flex-1" />
 
-          {/* ✅ High-contrast input */}
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -43,7 +56,6 @@ export default function BooksList() {
                        focus:outline-none focus:ring-2 focus:ring-rose-600"
           />
 
-          {/* ✅ High-contrast select */}
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -53,12 +65,13 @@ export default function BooksList() {
                        focus:outline-none focus:ring-2 focus:ring-rose-600"
           >
             <option value="all">All</option>
-            <option value="planned">Planned</option>
+            <option value="wishlist">Wishlist</option>
             <option value="reading">Reading</option>
-            <option value="completed">Completed</option>
+            <option value="finished">Finished</option>
           </select>
         </header>
 
+        {/* 📚 Books Grid */}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((b) => (
             <li key={b.id}>
@@ -69,26 +82,75 @@ export default function BooksList() {
                     alt={`${b.title} cover`}
                     className="w-20 h-28 object-cover rounded"
                   />
+
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold">{b.title}</h2>
                     <p className="text-sm">{b.author}</p>
                     <p className="text-xs text-gray-600">
-                      {b.genre} • {b.year}
+                      {b.genre || "Unknown Genre"}
                     </p>
 
-                    {/* Optional: color-coded status badge */}
+                    {/* 👤 Added By */}
+                    {b.addedBy && (
+                      <p className="text-xs italic text-gray-500 mt-1">
+                        Added by {b.addedBy}
+                        {user &&
+                          (b.addedBy === user.name ||
+                            b.addedBy === user.email.split("@")[0]) && (
+                            <span className="ml-2 text-green-700 font-semibold">
+                              • You
+                            </span>
+                          )}
+                      </p>
+                    )}
+
+                    {/* 🔹 Status Tag (optional) */}
                     <span
                       className={
-                        "inline-block mt-2 text-xs rounded-full px-2 py-0.5 border " +
-                        (b.status === "completed"
-                          ? "bg-green-100 border-green-300 text-green-800"
+                        "inline-block mt-3 text-xs font-semibold tracking-wide uppercase rounded-full px-3 py-1 border shadow-sm " +
+                        (b.status === "finished"
+                          ? "bg-green-100 border-green-400 text-green-700"
                           : b.status === "reading"
-                          ? "bg-blue-100 border-blue-300 text-blue-800"
-                          : "bg-gray-100 border-gray-300 text-gray-800")
+                          ? "bg-blue-100 border-blue-400 text-blue-700"
+                          : "bg-amber-100 border-amber-400 text-amber-700")
                       }
                     >
-                      {b.status}
+                      {b.status
+                        ? b.status.charAt(0).toUpperCase() + b.status.slice(1)
+                        : "No Status"}
                     </span>
+
+                    {/* 🔸 Add to Reading List */}
+                    {user && (
+                      <button
+                        onClick={() => {
+                          const key = `reading_${user.email}`;
+                          const list =
+                            JSON.parse(localStorage.getItem(key)) || [];
+
+                          const exists = list.some((x) => x.id === b.id);
+                          if (exists) {
+                            alert("This book is already in your reading list!");
+                            return;
+                          }
+
+                          const newBook = {
+                            ...b,
+                            status: "wishlist",
+                            progress: 0,
+                            startedAt: null,
+                            finishedAt: null,
+                          };
+
+                          const updated = [...list, newBook];
+                          localStorage.setItem(key, JSON.stringify(updated));
+                          alert(`✅ "${b.title}" added to your reading list.`);
+                        }}
+                        className="mt-3 block text-xs bg-[#631730] text-white px-3 py-1.5 rounded-lg hover:bg-[#B4182D] transition"
+                      >
+                        Add to Reading List
+                      </button>
+                    )}
 
                     <div className="mt-3">
                       <Link
@@ -107,7 +169,7 @@ export default function BooksList() {
 
         {filtered.length === 0 && (
           <p className="text-sm mt-6 text-gray-200">
-            No books match your search/filter.
+            No books found matching your filters.
           </p>
         )}
       </div>

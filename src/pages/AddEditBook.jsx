@@ -4,12 +4,40 @@ import { BookContext } from "../context/BookContext";
 import Navbar from "../components/Navbar";
 
 const AddEditBook = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loggedIn =
+      localStorage.getItem("loggedInUser") ||
+      sessionStorage.getItem("loggedInUser");
+    if (!loggedIn) {
+      const banner = document.createElement("div");
+      banner.textContent = "⚠ Please log in to access Add/Edit Books.";
+      banner.style.position = "fixed";
+      banner.style.top = "80px";
+      banner.style.left = "50%";
+      banner.style.transform = "translateX(-50%)";
+      banner.style.background = "#fef08a";
+      banner.style.color = "#63320c";
+      banner.style.padding = "10px 20px";
+      banner.style.borderRadius = "8px";
+      banner.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+      banner.style.zIndex = "9999";
+      document.body.appendChild(banner);
+      setTimeout(() => {
+        banner.remove();
+        navigate("/login");
+      }, 2000);
+    }
+  }, [navigate]);
+
+  const { id } = useParams();
   const { books, addBook, updateBook } = useContext(BookContext);
 
   const editing = Boolean(id);
-  const existingBook = editing ? books.find((b) => b.id === parseInt(id)) : null;
+  const existingBook = editing
+    ? books.find((b) => b.id === parseInt(id))
+    : null;
 
   const [form, setForm] = useState({
     title: "",
@@ -33,12 +61,55 @@ const AddEditBook = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (editing) {
-      updateBook(parseInt(id), form);
-    } else {
-      addBook({ ...form, id: Date.now() });
+
+    const loggedUser =
+      JSON.parse(localStorage.getItem("loggedInUser")) ||
+      JSON.parse(sessionStorage.getItem("loggedInUser"));
+
+    if (!loggedUser) {
+      alert("Please log in to add or edit books.");
+      navigate("/login");
+      return;
     }
-    navigate("/");
+
+    const readingKey = `reading_${loggedUser.email}`;
+    const globalKey = "global_books";
+
+    const userList = JSON.parse(localStorage.getItem(readingKey)) || [];
+    const globalList = JSON.parse(localStorage.getItem(globalKey)) || [];
+
+    if (editing) {
+      // Update in personal list
+      const updatedUserList = userList.map((b) =>
+        b.id === parseInt(id) ? { ...b, ...form } : b
+      );
+      localStorage.setItem(readingKey, JSON.stringify(updatedUserList));
+
+      // Update globally if same id exists
+      const updatedGlobalList = globalList.map((b) =>
+        b.id === parseInt(id) ? { ...b, ...form } : b
+      );
+      localStorage.setItem(globalKey, JSON.stringify(updatedGlobalList));
+    } else {
+      // Create new book object
+      const newBook = {
+        ...form,
+        id: Date.now(),
+        status: "wishlist",
+        progress: 0,
+        createdAt: new Date().toISOString(),
+        addedBy: loggedUser.name || loggedUser.email.split("@")[0],
+      };
+
+      // Add to both lists
+      const updatedUserList = [...userList, newBook];
+      const updatedGlobalList = [...globalList, newBook];
+
+      localStorage.setItem(readingKey, JSON.stringify(updatedUserList));
+      localStorage.setItem(globalKey, JSON.stringify(updatedGlobalList));
+    }
+
+    navigate("/books");
   };
 
   return (
