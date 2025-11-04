@@ -63,6 +63,9 @@ export default function Navbar() {
           <Link to="/profile" className="hover:underline">
             Profile
           </Link>
+          <Link to="/add" className="hover:underline">
+            Add & Edit
+          </Link>
 
           {/* Right-side: user dropdown or login/home */}
           {loggedUser ? (

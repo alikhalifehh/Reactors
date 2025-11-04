@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Link } from "react-router-dom";
 
 export default function HomePage() {
   const images = [
@@ -58,20 +58,23 @@ export default function HomePage() {
           Discover books, build your reading list, and never lose track of your progress!
         </p>
 
-        {/* ✅ Replaced button with Link to /books */}
+        {/* ✅ Correct: Link to books page */}
         <Link
           to="/books"
           className="px-10 py-5 text-white text-xl font-bold rounded-2xl shadow-xl hover:scale-110 transition-transform"
-          style={{ backgroundColor: "#5412B" }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#B4182D")}
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#631730ff")}
+          style={{ backgroundColor: "#631730ff" }}
+          onMouseOver={(e) =>
+            (e.currentTarget.style.backgroundColor = "#B4182D")
+          }
+          onMouseOut={(e) =>
+            (e.currentTarget.style.backgroundColor = "#631730ff")
+          }
         >
           Explore Books
         </Link>
 
-        {/* Features Section (Circular) */}
+        {/* Features Section */}
         <section className="flex justify-center gap-8 mt-20">
-          {/* Track Books */}
           <div className="w-32 h-32 flex flex-col items-center justify-center bg-white/90 rounded-full shadow hover:shadow-xl transition text-center">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-100 text-purple-600 text-2xl mb-2">
               📚
@@ -79,7 +82,6 @@ export default function HomePage() {
             <h3 className="text-sm font-semibold text-gray-900">Track</h3>
           </div>
 
-          {/* Discover Details */}
           <div className="w-32 h-32 flex flex-col items-center justify-center bg-white/90 rounded-full shadow hover:shadow-xl transition text-center">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 text-2xl mb-2">
               📖
@@ -87,7 +89,6 @@ export default function HomePage() {
             <h3 className="text-sm font-semibold text-gray-900">Discover</h3>
           </div>
 
-          {/* Stay Motivated */}
           <div className="w-32 h-32 flex flex-col items-center justify-center bg-white/90 rounded-full shadow hover:shadow-xl transition text-center">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100 text-yellow-600 text-2xl mb-2">
               ⭐
