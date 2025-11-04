@@ -1,0 +1,107 @@
+// src/data/books.js
+import cleanCode from "../assets/cleanCode.jpeg";
+import atomicHabits from "../assets/atomic-habits.jpg";
+import theAlchemist from "../assets/the-alchemist.jpg";
+import deepWork from "../assets/deep-work.jpg";
+import thePragmaticProgrammer from "../assets/thePragmaticProgrammer.jpeg";
+import educated from "../assets/educated.jpeg";
+import theGene from "../assets/theGene.jpg";
+import theDesign from "../assets/theDesign.jpg";
+import theGirl from "../assets/theGirl.jpg";
+
+export const books = [
+  {
+    id: "bk-001",
+    title: "Clean Code",
+    author: "Robert C. Martin",
+    year: 2008,
+    genre: "Software",
+    status: "completed", // planned | reading | completed
+    cover: cleanCode,
+    description: "A handbook of agile software craftsmanship."
+  },
+  {
+    id: "bk-002",
+    title: "The Pragmatic Programmer",
+    author: "Andrew Hunt, David Thomas",
+    year: 1999,
+    genre: "Software",
+    status: "reading",
+    cover: thePragmaticProgrammer,
+    description: "Practical tips for becoming a better developer."
+  },
+  {
+    id: "bk-003",
+    title: "Atomic Habits",
+    author: "James Clear",
+    year: 2018,
+    genre: "Self-help",
+    status: "planned",
+    cover: atomicHabits,
+    description: "Tiny changes, remarkable results."
+  },
+  {
+    id: "bk-004",
+    title: "Deep Work",
+    author: "Cal Newport",
+    year: 2016,
+    genre: "Productivity",
+    status: "completed",
+    cover: deepWork,
+    description: "Rules for focused success in a distracted world."
+  },
+  {
+    id: "bk-005",
+    title: "Educated",
+    author: "Tara Westover",
+    year: 2018,
+    genre: "Memoir",
+    status: "reading",
+    cover: educated,
+    description: "A memoir about the transformative power of education."
+  },
+  {
+    id: "bk-006",
+    title: "The Alchemist",
+    author: "Paulo Coelho",
+    year: 1988,
+    genre: "Fiction",
+    status: "planned",
+    cover: theAlchemist,
+    description: "A journey of self-discovery and destiny."
+  },
+  {
+  id: "bk-007",
+  title: "The Gene: An Intimate History",
+  author: "Siddhartha Mukherjee",
+  genre: "Science / Biology",
+  year: 2016,
+  status: "completed",
+  description:
+    "A fascinating exploration of the history, power, and ethical implications of genetics.",
+  cover: theGene,
+},
+{
+  id: "bk-008",
+  title: "The Design of Everyday Things",
+  author: "Don Norman",
+  genre: "Design / Usability",
+  year: 2013,
+  status: "reading",
+  description:
+    "Reveals the psychology behind good design and how everyday objects shape our experience.",
+  cover: theDesign,
+},
+{
+  id: "bk-009",
+  title: "The Girl Who Kicked the Hornet’s Nest",
+  author: "Stieg Larsson",
+  genre: "Mystery / Thriller",
+  year: 2007,
+  status: "planned",
+  description:
+    "The explosive finale of the Millennium trilogy, following Lisbeth Salander as she fights to clear her name and expose corruption at the highest levels.”",
+  cover: theGirl,
+},
+
+];
