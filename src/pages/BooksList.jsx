@@ -8,7 +8,7 @@ export default function BooksList() {
   const [user, setUser] = useState(null);
   const [allBooks, setAllBooks] = useState([]);
 
-  // 🔹 Load user + merge seed with any global books
+  // 🔹 Load logged user and merge seed + globally added books
   useEffect(() => {
     const logged =
       JSON.parse(localStorage.getItem("loggedInUser")) ||
@@ -20,7 +20,7 @@ export default function BooksList() {
     setAllBooks(merged);
   }, []);
 
-  // 🔹 Filter logic
+  // 🔹 Filtering logic
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allBooks.filter((b) => {
@@ -33,6 +33,35 @@ export default function BooksList() {
       return matchesText && matchesStatus;
     });
   }, [query, status, allBooks]);
+
+  // 🔹 Add book to user’s reading list
+  const addToReadingList = (book) => {
+    if (!user) {
+      alert("Please log in to add books to your reading list.");
+      return;
+    }
+
+    const key = `reading_${user.email}`;
+    const list = JSON.parse(localStorage.getItem(key)) || [];
+    const exists = list.some((x) => x.id === book.id);
+
+    if (exists) {
+      alert(`"${book.title}" is already in your reading list.`);
+      return;
+    }
+
+    const newBook = {
+      ...book,
+      status: "wishlist",
+      progress: 0,
+      startedAt: null,
+      finishedAt: null,
+    };
+
+    const updated = [...list, newBook];
+    localStorage.setItem(key, JSON.stringify(updated));
+    alert(`✅ "${book.title}" added to your reading list.`);
+  };
 
   return (
     <div
@@ -73,107 +102,90 @@ export default function BooksList() {
 
         {/* 📚 Books Grid */}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((b) => (
-            <li key={b.id}>
-              <article className="rounded-xl border bg-white/90 text-gray-900 shadow-sm hover:shadow-md transition">
-                <div className="flex gap-4 p-4">
-                  <img
-                    src={b.cover}
-                    alt={`${b.title} cover`}
-                    className="w-20 h-28 object-cover rounded"
-                  />
+          {filtered.map((b) => {
+            // Check if this book exists in current user’s reading list
+            const userList =
+              user && JSON.parse(localStorage.getItem(`reading_${user.email}`));
+            const match = userList?.find((x) => x.id === b.id);
 
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold">{b.title}</h2>
-                    <p className="text-sm">{b.author}</p>
-                    <p className="text-xs text-gray-600">
-                      {b.genre || "Unknown Genre"}
-                    </p>
+            return (
+              <li key={b.id}>
+                <article className="rounded-xl border bg-white/90 text-gray-900 shadow-sm hover:shadow-md transition">
+                  <div className="flex gap-4 p-4">
+                    <img
+                      src={b.cover}
+                      alt={`${b.title} cover`}
+                      className="w-20 h-28 object-cover rounded"
+                    />
 
-                    {/* 👤 Added By */}
-                    {b.addedBy && (
-                      <p className="text-xs italic text-gray-500 mt-1">
-                        Added by {b.addedBy}
-                        {user &&
-                          (b.addedBy === user.name ||
-                            b.addedBy === user.email.split("@")[0]) && (
-                            <span className="ml-2 text-green-700 font-semibold">
-                              • You
-                            </span>
-                          )}
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold">{b.title}</h2>
+                      <p className="text-sm">{b.author}</p>
+                      <p className="text-xs text-gray-600">
+                        {b.genre || "Unknown Genre"}
                       </p>
-                    )}
 
-                    {/* 🔹 Status tag – show only if logged in */}
-                    {user && b.status && (
-                      <span
-                        className={
-                          "inline-block mt-3 text-xs font-semibold tracking-wide uppercase rounded-full px-3 py-1 border shadow-sm " +
-                          (b.status === "finished"
-                            ? "bg-green-100 border-green-400 text-green-700"
-                            : b.status === "reading"
-                            ? "bg-blue-100 border-blue-400 text-blue-700"
-                            : "bg-amber-100 border-amber-400 text-amber-700")
-                        }
-                      >
-                        {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
-                      </span>
-                    )}
+                      {/* 👤 Added By */}
+                      {b.addedBy && (
+                        <p className="text-xs italic text-gray-500 mt-1">
+                          Added by {b.addedBy}
+                          {user &&
+                            (b.addedBy === user.name ||
+                              b.addedBy === user.email.split("@")[0]) && (
+                              <span className="ml-2 text-green-700 font-semibold">
+                                • You
+                              </span>
+                            )}
+                        </p>
+                      )}
 
-                    {/* Optional placeholder if not logged in */}
-                    {!user && (
-                      <span className="inline-block mt-3 text-xs text-gray-400 italic">
-                        Login to view status
-                      </span>
-                    )}
+                      {/* 🔹 User-specific tag */}
+                      {user && match && (
+                        <span
+                          className={`inline-block mt-3 text-xs font-semibold tracking-wide uppercase rounded-full px-3 py-1 border shadow-sm ${
+                            match.status === "finished"
+                              ? "bg-green-100 border-green-400 text-green-700"
+                              : match.status === "reading"
+                              ? "bg-blue-100 border-blue-400 text-blue-700"
+                              : "bg-amber-100 border-amber-400 text-amber-700"
+                          }`}
+                        >
+                          {match.status.charAt(0).toUpperCase() +
+                            match.status.slice(1)}
+                        </span>
+                      )}
 
-                    {/* 🔸 Add to Reading List button (only when logged in) */}
-                    {user && (
-                      <button
-                        onClick={() => {
-                          const key = `reading_${user.email}`;
-                          const list =
-                            JSON.parse(localStorage.getItem(key)) || [];
+                      {/* 🔸 Add to Reading List */}
+                      {user && !match && (
+                        <button
+                          onClick={() => addToReadingList(b)}
+                          className="mt-3 block text-xs bg-[#631730] text-white px-3 py-1.5 rounded-lg hover:bg-[#B4182D] transition"
+                        >
+                          Add to Reading List
+                        </button>
+                      )}
 
-                          const exists = list.some((x) => x.id === b.id);
-                          if (exists) {
-                            alert(
-                              `"${b.title}" is already in your reading list!`
-                            );
-                            return;
-                          }
+                      {/* 🔸 Placeholder for guests */}
+                      {!user && (
+                        <span className="inline-block mt-3 text-xs text-gray-400 italic">
+                          Login to view status
+                        </span>
+                      )}
 
-                          const newBook = {
-                            ...b,
-                            status: "wishlist",
-                            progress: 0,
-                            startedAt: null,
-                            finishedAt: null,
-                          };
-
-                          const updated = [...list, newBook];
-                          localStorage.setItem(key, JSON.stringify(updated));
-                          alert(`✅ "${b.title}" added to your reading list.`);
-                        }}
-                        className="mt-3 block text-xs bg-[#631730] text-white px-3 py-1.5 rounded-lg hover:bg-[#B4182D] transition"
-                      >
-                        Add to Reading List
-                      </button>
-                    )}
-
-                    <div className="mt-3">
-                      <Link
-                        to={`/books/${b.id}`}
-                        className="text-sm text-[#631730] font-semibold underline hover:text-rose-300"
-                      >
-                        View details
-                      </Link>
+                      <div className="mt-3">
+                        <Link
+                          to={`/books/${b.id}`}
+                          className="text-sm text-[#631730] font-semibold underline hover:text-rose-300"
+                        >
+                          View details
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            </li>
-          ))}
+                </article>
+              </li>
+            );
+          })}
         </ul>
 
         {filtered.length === 0 && (
