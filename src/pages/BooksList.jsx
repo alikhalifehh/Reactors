@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { books as seed } from "../data/books"; // keep the base 12 books
+import { books as seed } from "../data/books";
 
 export default function BooksList() {
   const [query, setQuery] = useState("");
@@ -8,7 +8,7 @@ export default function BooksList() {
   const [user, setUser] = useState(null);
   const [allBooks, setAllBooks] = useState([]);
 
-  // ✅ Load user + merge seed + global books
+  // 🔹 Load user + merge seed with any global books
   useEffect(() => {
     const logged =
       JSON.parse(localStorage.getItem("loggedInUser")) ||
@@ -16,11 +16,11 @@ export default function BooksList() {
     setUser(logged || null);
 
     const globalList = JSON.parse(localStorage.getItem("global_books")) || [];
-    const merged = [...seed, ...globalList]; // merge built-in + added books
+    const merged = [...seed, ...globalList];
     setAllBooks(merged);
   }, []);
 
-  // ✅ Filter logic
+  // 🔹 Filter logic
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allBooks.filter((b) => {
@@ -36,7 +36,7 @@ export default function BooksList() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center relative"
+      className="min-h-screen bg-cover bg-center relative transition-colors duration-300"
       style={{ backgroundColor: "#631730ff" }}
     >
       <div className="absolute inset-0 bg-black/10" />
@@ -104,23 +104,30 @@ export default function BooksList() {
                       </p>
                     )}
 
-                    {/* 🔹 Status Tag (optional) */}
-                    <span
-                      className={
-                        "inline-block mt-3 text-xs font-semibold tracking-wide uppercase rounded-full px-3 py-1 border shadow-sm " +
-                        (b.status === "finished"
-                          ? "bg-green-100 border-green-400 text-green-700"
-                          : b.status === "reading"
-                          ? "bg-blue-100 border-blue-400 text-blue-700"
-                          : "bg-amber-100 border-amber-400 text-amber-700")
-                      }
-                    >
-                      {b.status
-                        ? b.status.charAt(0).toUpperCase() + b.status.slice(1)
-                        : "No Status"}
-                    </span>
+                    {/* 🔹 Status tag – show only if logged in */}
+                    {user && b.status && (
+                      <span
+                        className={
+                          "inline-block mt-3 text-xs font-semibold tracking-wide uppercase rounded-full px-3 py-1 border shadow-sm " +
+                          (b.status === "finished"
+                            ? "bg-green-100 border-green-400 text-green-700"
+                            : b.status === "reading"
+                            ? "bg-blue-100 border-blue-400 text-blue-700"
+                            : "bg-amber-100 border-amber-400 text-amber-700")
+                        }
+                      >
+                        {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
+                      </span>
+                    )}
 
-                    {/* 🔸 Add to Reading List */}
+                    {/* Optional placeholder if not logged in */}
+                    {!user && (
+                      <span className="inline-block mt-3 text-xs text-gray-400 italic">
+                        Login to view status
+                      </span>
+                    )}
+
+                    {/* 🔸 Add to Reading List button (only when logged in) */}
                     {user && (
                       <button
                         onClick={() => {
@@ -130,7 +137,9 @@ export default function BooksList() {
 
                           const exists = list.some((x) => x.id === b.id);
                           if (exists) {
-                            alert("This book is already in your reading list!");
+                            alert(
+                              `"${b.title}" is already in your reading list!`
+                            );
                             return;
                           }
 
