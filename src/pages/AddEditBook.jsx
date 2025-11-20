@@ -1,229 +1,182 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { BookContext } from "../context/BookContext";
+import { useAuth } from "../context/AuthContext";
+import { booksApi } from "../services/api";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
-const AddEditBook = () => {
+export default function AddEditBook() {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const loggedIn =
-      localStorage.getItem("loggedInUser") ||
-      sessionStorage.getItem("loggedInUser");
-    if (!loggedIn) {
-      const banner = document.createElement("div");
-      banner.textContent = "⚠ Please log in to access Add/Edit Books.";
-      banner.style.position = "fixed";
-      banner.style.top = "80px";
-      banner.style.left = "50%";
-      banner.style.transform = "translateX(-50%)";
-      banner.style.background = "#fef08a";
-      banner.style.color = "#63320c";
-      banner.style.padding = "10px 20px";
-      banner.style.borderRadius = "8px";
-      banner.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-      banner.style.zIndex = "9999";
-      document.body.appendChild(banner);
-      setTimeout(() => {
-        banner.remove();
-        navigate("/login");
-      }, 2000);
-    }
-  }, [navigate]);
-
   const { id } = useParams();
-  const { books, addBook, updateBook } = useContext(BookContext);
+  const { user, loading } = useAuth();
 
   const editing = Boolean(id);
-  const existingBook = editing
-    ? books.find((b) => b.id === parseInt(id))
-    : null;
 
   const [form, setForm] = useState({
     title: "",
     author: "",
+    description: "",
     genre: "",
-    status: "To Read",
-    progress: 0,
-    rating: 0,
-    notes: "",
-    cover: "",
+    coverImage: "",
   });
 
   useEffect(() => {
-    if (existingBook) setForm(existingBook);
-  }, [existingBook]);
+    if (!loading && !user) navigate("/login");
+  }, [loading, user, navigate]);
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    if (!editing) return;
+
+    async function load() {
+      try {
+        const res = await booksApi.getOne(id);
+        const b = res.data;
+        setForm({
+          title: b.title || "",
+          author: b.author || "",
+          description: b.description || "",
+          genre: b.genre || "",
+          coverImage: b.coverImage || "",
+        });
+      } catch {
+        console.log("Could not load book");
+      }
+    }
+
+    load();
+  }, [editing, id]);
+
+  function handleChange(e) {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
 
-    const loggedUser =
-      JSON.parse(localStorage.getItem("loggedInUser")) ||
-      JSON.parse(sessionStorage.getItem("loggedInUser"));
-
-    if (!loggedUser) {
-      alert("Please log in to add or edit books.");
-      navigate("/login");
-      return;
+    try {
+      if (editing) {
+        await booksApi.update(id, form);
+      } else {
+        await booksApi.create(form);
+      }
+      navigate("/books");
+    } catch {
+      alert("Could not save book");
     }
+  }
 
-    const readingKey = `reading_${loggedUser.email}`;
-    const globalKey = "global_books";
-
-    const userList = JSON.parse(localStorage.getItem(readingKey)) || [];
-    const globalList = JSON.parse(localStorage.getItem(globalKey)) || [];
-
-    if (editing) {
-      // Update in personal list
-      const updatedUserList = userList.map((b) =>
-        b.id === parseInt(id) ? { ...b, ...form } : b
-      );
-      localStorage.setItem(readingKey, JSON.stringify(updatedUserList));
-
-      // Update globally if same id exists
-      const updatedGlobalList = globalList.map((b) =>
-        b.id === parseInt(id) ? { ...b, ...form } : b
-      );
-      localStorage.setItem(globalKey, JSON.stringify(updatedGlobalList));
-    } else {
-      // Create new book object
-      const newBook = {
-        ...form,
-        id: Date.now(),
-        status: "wishlist",
-        progress: 0,
-        createdAt: new Date().toISOString(),
-        addedBy: loggedUser.name || loggedUser.email.split("@")[0],
-      };
-
-      // Add to both lists
-      const updatedUserList = [...userList, newBook];
-      const updatedGlobalList = [...globalList, newBook];
-
-      localStorage.setItem(readingKey, JSON.stringify(updatedUserList));
-      localStorage.setItem(globalKey, JSON.stringify(updatedGlobalList));
-    }
-
-    navigate("/books");
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#020617] text-white">
+        <Navbar />
+        <main className="flex-1 pt-28 px-6 text-center text-gray-300">
+          Loading...
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#1c1208] text-white flex justify-center items-center p-6 bg-[url('/src/assets/library-bg.jpg')] bg-cover bg-center bg-no-repeat">
-      <div className="bg-[#2c1b10]/95 w-full max-w-2xl rounded-2xl shadow-xl p-8 border border-[#55322c] backdrop-blur-sm">
-        <h1 className="text-3xl font-bold mb-6 text-center text-[#f5d39d]">
-          {editing ? "Edit Book Details" : "Add a New Book"}
-        </h1>
+    <div className="min-h-screen flex flex-col bg-[#020617] text-white">
+      <Navbar />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1 text-[#f5d39d]">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              className="w-full p-2 rounded-md bg-[#3b2417] text-white border border-[#704832] focus:outline-none focus:ring-2 focus:ring-[#b66a4d]"
-              required
-            />
-          </div>
+      <main className="flex-1 max-w-3xl mx-auto pt-24 pb-16 px-4 sm:px-6">
+        <button
+          onClick={() => navigate("/books")}
+          className="text-xs text-gray-400 hover:text-gray-200 mb-4"
+        >
+          ← Back to Books
+        </button>
 
-          <div>
-            <label className="block mb-1 text-[#f5d39d]">Author</label>
-            <input
-              type="text"
-              name="author"
-              value={form.author}
-              onChange={handleChange}
-              className="w-full p-2 rounded-md bg-[#3b2417] text-white border border-[#704832] focus:outline-none focus:ring-2 focus:ring-[#b66a4d]"
-              required
-            />
-          </div>
+        <section className="bg-slate-900 border border-white/5 rounded-3xl shadow-xl p-6 sm:p-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6">
+            {editing ? "Edit Book" : "Add New Book"}
+          </h1>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1 text-[#f5d39d]">Genre</label>
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-1">
+              <label className="text-sm text-gray-200">Title</label>
               <input
-                type="text"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Book title"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm text-gray-200">Author</label>
+              <input
+                name="author"
+                value={form.author}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Author name"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm text-gray-200">Genre</label>
+              <input
                 name="genre"
                 value={form.genre}
                 onChange={handleChange}
-                className="w-full p-2 rounded-md bg-[#3b2417] text-white border border-[#704832] focus:outline-none focus:ring-2 focus:ring-[#b66a4d]"
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Fantasy, Thriller, Sci-Fi..."
               />
             </div>
 
-            <div>
-              <label className="block mb-1 text-[#f5d39d]">Status</label>
-              <select
-                name="status"
-                value={form.status}
+            <div className="space-y-1">
+              <label className="text-sm text-gray-200">Cover Image URL</label>
+              <input
+                name="coverImage"
+                value={form.coverImage}
                 onChange={handleChange}
-                className="w-full p-2 rounded-md bg-[#3b2417] text-white border border-[#704832] focus:outline-none focus:ring-2 focus:ring-[#b66a4d]"
-              >
-                <option>To Read</option>
-                <option>Reading</option>
-                <option>Completed</option>
-              </select>
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="https://example.com/cover.jpg"
+              />
+              <p className="text-[11px] text-gray-400">
+                Paste a direct image link. This will appear on the book cards
+                and detail page.
+              </p>
             </div>
-          </div>
 
-          <div>
-            <label className="block mb-1 text-[#f5d39d]">Notes / Review</label>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              className="w-full p-2 h-24 rounded-md bg-[#3b2417] text-white border border-[#704832] focus:outline-none focus:ring-2 focus:ring-[#b66a4d]"
-              placeholder="Write your thoughts..."
-            ></textarea>
-          </div>
-
-          <div>
-            <label className="block mb-1 text-[#f5d39d]">Cover Image URL</label>
-            <input
-              type="text"
-              name="cover"
-              value={form.cover}
-              onChange={handleChange}
-              className="w-full p-2 rounded-md bg-[#3b2417] text-white border border-[#704832] focus:outline-none focus:ring-2 focus:ring-[#b66a4d]"
-              placeholder="Paste a link to the book cover"
-            />
-          </div>
-
-          {form.cover && (
-            <div className="flex justify-center my-4">
-              <img
-                src={form.cover}
-                alt="Book cover preview"
-                className="h-40 rounded-lg shadow-md border border-[#704832]"
+            <div className="space-y-1">
+              <label className="text-sm text-gray-200">Description</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm h-32 resize-none focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Brief summary of the book"
               />
             </div>
-          )}
 
-          <div className="flex justify-between pt-4">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="px-5 py-2 bg-[#5b352a] hover:bg-[#703d31] rounded-md text-[#f5d39d] font-semibold shadow-md transition-all duration-200"
-            >
-              Cancel
-            </button>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/books")}
+                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-sm font-semibold"
+              >
+                {editing ? "Save Changes" : "Add Book"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
 
-            <button
-              type="submit"
-              className="px-5 py-2 bg-[#b66a4d] hover:bg-[#c47855] rounded-md text-white font-semibold shadow-md transition-all duration-200"
-            >
-              {editing ? "Save Changes" : "Add Book"}
-            </button>
-          </div>
-        </form>
-      </div>
+      <Footer />
     </div>
   );
-};
-
-export default AddEditBook;
+}

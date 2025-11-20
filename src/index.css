@@ -1,11 +1,26 @@
 @import "tailwindcss";
 
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark {
+  background-color: #020617; /* current dark navy  */
+  color: white;
+}
+
+html.light {
+  background-color: #f8f9fa; /* soft light background */
+  color: #111;
+}
+
 body {
   background-color: #f9fafb;
   color: #111827;
 }
 @keyframes gradient-x {
-  0%, 100% {
+  0%,
+  100% {
     background-position: left center;
   }
   50% {

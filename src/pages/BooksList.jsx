@@ -1,199 +1,148 @@
-import { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { books as seed } from "../data/books";
+import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import { booksApi, userBooksApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function BooksList() {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
-  const [user, setUser] = useState(null);
-  const [allBooks, setAllBooks] = useState([]);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // 🔹 Load logged user and merge seed + globally added books
+  const [books, setBooks] = useState([]);
+  const [search, setSearch] = useState("");
+  const [genres, setGenres] = useState([]);
+  const [activeGenre, setActiveGenre] = useState("all");
+
   useEffect(() => {
-    const logged =
-      JSON.parse(localStorage.getItem("loggedInUser")) ||
-      JSON.parse(sessionStorage.getItem("loggedInUser"));
-    setUser(logged || null);
+    async function load() {
+      try {
+        const res = await booksApi.getAll();
+        setBooks(res.data);
 
-    const globalList = JSON.parse(localStorage.getItem("global_books")) || [];
-    const merged = [...seed, ...globalList];
-    setAllBooks(merged);
+        const uniqueGenres = Array.from(
+          new Set(res.data.map((b) => b.genre).filter(Boolean))
+        );
+        setGenres(uniqueGenres);
+      } catch {
+        console.log("Could not load books");
+      }
+    }
+
+    load();
   }, []);
 
-  // 🔹 Filtering logic
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return allBooks.filter((b) => {
-      const matchesText =
-        !q || `${b.title} ${b.author} ${b.genre}`.toLowerCase().includes(q);
-      const matchesStatus =
-        status === "all"
-          ? true
-          : (b.status || "").toLowerCase() === status.toLowerCase();
-      return matchesText && matchesStatus;
-    });
-  }, [query, status, allBooks]);
-
-  // 🔹 Add book to user’s reading list
-  const addToReadingList = (book) => {
+  async function addToList(bookId) {
     if (!user) {
-      alert("Please log in to add books to your reading list.");
+      navigate("/login");
       return;
     }
 
-    const key = `reading_${user.email}`;
-    const list = JSON.parse(localStorage.getItem(key)) || [];
-    const exists = list.some((x) => x.id === book.id);
-
-    if (exists) {
-      alert(`"${book.title}" is already in your reading list.`);
-      return;
+    try {
+      await userBooksApi.create({
+        bookId,
+        status: "wishlist",
+        progress: 0,
+      });
+      alert("Book added to your list");
+    } catch (err) {
+      const msg = err?.response?.data?.message;
+      alert(msg || "Could not add book");
     }
+  }
 
-    const newBook = {
-      ...book,
-      status: "wishlist",
-      progress: 0,
-      startedAt: null,
-      finishedAt: null,
-    };
-
-    const updated = [...list, newBook];
-    localStorage.setItem(key, JSON.stringify(updated));
-    alert(`✅ "${book.title}" added to your reading list.`);
-  };
+  const filteredBooks = books.filter((b) => {
+    const matchesTitle = b.title.toLowerCase().includes(search.toLowerCase());
+    const matchesGenre = activeGenre === "all" || b.genre === activeGenre;
+    return matchesTitle && matchesGenre;
+  });
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center relative transition-colors duration-300"
-      style={{ backgroundColor: "#631730ff" }}
-    >
-      <div className="absolute inset-0 bg-black/10" />
+    <div className="min-h-screen bg-white text-black dark:bg-[#020617] dark:text-white">
+      <Navbar />
 
-      <div className="relative z-10 max-w-6xl mx-auto p-4 text-white">
-        {/* 🔍 Search + Filter */}
-        <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center p-3 rounded-lg">
-          <div className="flex-1" />
+      <div className="max-w-7xl mx-auto pt-24 px-6 pb-20">
+        <h1 className="text-3xl font-bold mb-6">Explore Books</h1>
 
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title, author, or genre"
-            aria-label="Search books"
-            className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2
-                       bg-white/90 text-gray-900 placeholder-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-rose-600"
+            placeholder="Search by title"
+            className="w-full sm:w-80 p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
 
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            aria-label="Filter by reading status"
-            className="rounded-lg border border-gray-300 px-3 py-2
-                       bg-white/90 text-gray-900
-                       focus:outline-none focus:ring-2 focus:ring-rose-600"
-          >
-            <option value="all">All</option>
-            <option value="wishlist">Wishlist</option>
-            <option value="reading">Reading</option>
-            <option value="finished">Finished</option>
-          </select>
-        </header>
+          <div className="bg-gray-800 p-1 rounded-lg flex gap-1 flex-wrap">
+            <button
+              onClick={() => setActiveGenre("all")}
+              className={
+                "px-3 py-1 rounded-md text-sm " +
+                (activeGenre === "all" ? "bg-pink-600" : "hover:bg-gray-700")
+              }
+            >
+              All
+            </button>
 
-        {/* 📚 Books Grid */}
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((b) => {
-            // Check if this book exists in current user’s reading list
-            const userList =
-              user && JSON.parse(localStorage.getItem(`reading_${user.email}`));
-            const match = userList?.find((x) => x.id === b.id);
+            {genres.map((g) => (
+              <button
+                key={g}
+                onClick={() => setActiveGenre(g)}
+                className={
+                  "px-3 py-1 rounded-md text-sm " +
+                  (activeGenre === g ? "bg-pink-600" : "hover:bg-gray-700")
+                }
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            return (
-              <li key={b.id}>
-                <article className="rounded-xl border bg-white/90 text-gray-900 shadow-sm hover:shadow-md transition">
-                  <div className="flex gap-4 p-4">
-                    <img
-                      src={b.cover}
-                      alt={`${b.title} cover`}
-                      className="w-20 h-28 object-cover rounded"
-                    />
-
-                    <div className="flex-1">
-                      <h2 className="text-lg font-semibold">{b.title}</h2>
-                      <p className="text-sm">{b.author}</p>
-                      <p className="text-xs text-gray-600">
-                        {b.genre || "Unknown Genre"}
-                      </p>
-
-                      {/* 👤 Added By */}
-                      {b.addedBy && (
-                        <p className="text-xs italic text-gray-500 mt-1">
-                          Added by {b.addedBy}
-                          {user &&
-                            (b.addedBy === user.name ||
-                              b.addedBy === user.email.split("@")[0]) && (
-                              <span className="ml-2 text-green-700 font-semibold">
-                                • You
-                              </span>
-                            )}
-                        </p>
-                      )}
-
-                      {/* 🔹 User-specific tag */}
-                      {user && match && (
-                        <span
-                          className={`inline-block mt-3 text-xs font-semibold tracking-wide uppercase rounded-full px-3 py-1 border shadow-sm ${
-                            match.status === "finished"
-                              ? "bg-green-100 border-green-400 text-green-700"
-                              : match.status === "reading"
-                              ? "bg-blue-100 border-blue-400 text-blue-700"
-                              : "bg-amber-100 border-amber-400 text-amber-700"
-                          }`}
-                        >
-                          {match.status.charAt(0).toUpperCase() +
-                            match.status.slice(1)}
-                        </span>
-                      )}
-
-                      {/* 🔸 Add to Reading List */}
-                      {user && !match && (
-                        <button
-                          onClick={() => addToReadingList(b)}
-                          className="mt-3 block text-xs bg-[#631730] text-white px-3 py-1.5 rounded-lg hover:bg-[#B4182D] transition"
-                        >
-                          Add to Reading List
-                        </button>
-                      )}
-
-                      {/* 🔸 Placeholder for guests */}
-                      {!user && (
-                        <span className="inline-block mt-3 text-xs text-gray-400 italic">
-                          Login to view status
-                        </span>
-                      )}
-
-                      <div className="mt-3">
-                        <Link
-                          to={`/books/${b.id}`}
-                          className="text-sm text-[#631730] font-semibold underline hover:text-rose-300"
-                        >
-                          View details
-                        </Link>
-                      </div>
-                    </div>
+        {filteredBooks.length === 0 ? (
+          <p className="text-gray-400 mt-10">No books found.</p>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredBooks.map((b) => (
+              <div
+                key={b._id}
+                className="bg-gray-800 rounded-xl shadow-lg p-5 flex flex-col hover:bg-gray-700 transition cursor-pointer"
+                onClick={() => navigate(`/books/${b._id}`)}
+              >
+                {b.coverUrl ? (
+                  <img
+                    src={b.coverUrl}
+                    alt={b.title}
+                    className="h-48 w-full object-cover rounded-lg border border-gray-700"
+                  />
+                ) : (
+                  <div className="h-48 w-full bg-gray-700 rounded-lg flex items-center justify-center text-gray-300 text-sm">
+                    No cover available
                   </div>
-                </article>
-              </li>
-            );
-          })}
-        </ul>
+                )}
 
-        {filtered.length === 0 && (
-          <p className="text-sm mt-6 text-gray-200">
-            No books found matching your filters.
-          </p>
+                <h3 className="text-lg font-semibold mt-4">{b.title}</h3>
+                <p className="text-sm text-gray-400">{b.author}</p>
+
+                <p className="mt-3 text-xs text-gray-400 line-clamp-3">
+                  {b.description || "No description provided"}
+                </p>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToList(b._id);
+                  }}
+                  className="mt-auto px-4 py-2 bg-pink-600 rounded-md text-sm font-semibold hover:bg-pink-500"
+                >
+                  Add to My List
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

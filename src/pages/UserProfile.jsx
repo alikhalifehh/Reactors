@@ -1,349 +1,378 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import defaultAvatar from "../assets/default-user.png";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { userBooksApi } from "../services/api";
 
 export default function UserProfile() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  // 🔹 Redirect if not logged in
+  // consistent user ID fix
+  const userId = user?.id || user?._id;
+
+  const [summary, setSummary] = useState({
+    reading: 0,
+    finished: 0,
+    wishlist: 0,
+  });
+
+  const [activity, setActivity] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  const [profileExtras, setProfileExtras] = useState({
+    bio: "",
+    location: "",
+    favoriteGenre: "",
+    yearlyGoal: 0,
+  });
+
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    bio: "",
+    location: "",
+    favoriteGenre: "",
+    yearlyGoal: 0,
+  });
+
+  // Redirect if not logged in
   useEffect(() => {
-    const loggedIn =
-      localStorage.getItem("loggedInUser") ||
-      sessionStorage.getItem("loggedInUser");
-    if (!loggedIn) {
-      const banner = document.createElement("div");
-      banner.textContent = "⚠ Please log in to access Profile.";
-      banner.style.position = "fixed";
-      banner.style.top = "80px";
-      banner.style.left = "50%";
-      banner.style.transform = "translateX(-50%)";
-      banner.style.background = "#fef08a";
-      banner.style.color = "#63320c";
-      banner.style.padding = "10px 20px";
-      banner.style.borderRadius = "8px";
-      banner.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-      banner.style.zIndex = "9999";
-      document.body.appendChild(banner);
-      setTimeout(() => {
-        banner.remove();
-        navigate("/login");
-      }, 2000);
+    if (!loading && !user) navigate("/login");
+  }, [loading, user, navigate]);
+
+  // Load saved profile info
+  useEffect(() => {
+    if (!userId) return;
+
+    const stored = localStorage.getItem(`profile_${userId}`);
+    if (stored) {
+      try {
+        setProfileExtras(JSON.parse(stored));
+      } catch {
+        setProfileExtras({
+          bio: "",
+          location: "",
+          favoriteGenre: "",
+          yearlyGoal: 0,
+        });
+      }
     }
-  }, [navigate]);
+  }, [userId]);
 
-  // 🔹 Background rotation
-  const bgImages = [
-    "/src/assets/book.jpg",
-    "/src/assets/book2.jpg",
-    "/src/assets/book3.jpg",
-    "/src/assets/book4.jpg",
-    "/src/assets/book5.jpg",
-  ];
-  const [bgIndex, setBgIndex] = useState(0);
+  // Load stats + activity
   useEffect(() => {
-    const interval = setInterval(
-      () => setBgIndex((prev) => (prev + 1) % bgImages.length),
-      7000
+    if (!user) return;
+
+    async function loadStats() {
+      setLoadingStats(true);
+      try {
+        const [summaryRes, listRes] = await Promise.allSettled([
+          userBooksApi.getSummary(),
+          userBooksApi.getList(),
+        ]);
+
+        // summary
+        if (summaryRes.status === "fulfilled") {
+          const s = summaryRes.value.data.summary;
+          setSummary({
+            reading: s.reading || 0,
+            finished: s.finished || 0,
+            wishlist: s.wishlist || 0,
+          });
+        }
+
+        // activity
+        if (listRes.status === "fulfilled") {
+          const entries = listRes.value.data || [];
+          setActivity(entries.slice(0, 6));
+        }
+      } finally {
+        setLoadingStats(false);
+      }
+    }
+
+    loadStats();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#020617] text-white">
+        <Navbar />
+        <main className="pt-32 pb-10 text-center text-gray-300">
+          Loading profile...
+        </main>
+        <Footer />
+      </div>
     );
-    return () => clearInterval(interval);
-  }, [bgImages.length]);
-
-  // 🔹 Logged user + their reading list
-  const [user, setUser] = useState(null);
-  const [readingList, setReadingList] = useState([]);
-
-  useEffect(() => {
-    const u =
-      JSON.parse(localStorage.getItem("loggedInUser")) ||
-      JSON.parse(sessionStorage.getItem("loggedInUser"));
-    setUser(u || null);
-
-    if (!u) {
-      setReadingList([]);
-      return;
-    }
-
-    const key = `reading_${u.email}`;
-    const list = JSON.parse(localStorage.getItem(key)) || [];
-    setReadingList(list);
-  }, []);
-
-  // 🔹 Compute stats + extended analytics
-  function daysBetween(a, b) {
-    if (!a || !b) return 0;
-    const ms = Math.abs(new Date(b).getTime() - new Date(a).getTime());
-    return Math.floor(ms / (1000 * 60 * 60 * 24));
   }
 
-  function daysReading(book) {
-    if (book.status === "reading" && book.startedAt)
-      return daysBetween(book.startedAt, new Date());
-    if (book.status === "finished" && book.startedAt && book.finishedAt)
-      return daysBetween(book.startedAt, book.finishedAt);
-    return 0;
-  }
+  if (!user) return null;
 
-  const booksRead = readingList.filter((b) => b.status === "finished").length;
-  const inProgress = readingList.filter((b) => b.status === "reading").length;
-  const wishlist = readingList.filter((b) => b.status === "wishlist").length;
-  const total = booksRead + inProgress + wishlist;
-  const goalPercent = total === 0 ? 0 : Math.round((booksRead / total) * 100);
+  // avatar initials
+  const initials =
+    user.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "U";
 
-  // 📘 Total reading duration
-  const totalDaysReading = readingList
-    .filter((b) => b.status === "reading" || b.status === "finished")
-    .reduce((sum, b) => sum + daysReading(b), 0);
+  const totalBooks = summary.reading + summary.finished + summary.wishlist;
 
-  // ⭐ Average progress
-  const avgProgress =
-    readingList.length > 0
+  const goalPercent =
+    profileExtras.yearlyGoal && summary.finished
       ? Math.round(
-          readingList.reduce((sum, b) => sum + (b.progress || 0), 0) /
-            readingList.length
+          Math.min(100, (summary.finished / profileExtras.yearlyGoal) * 100)
         )
       : 0;
 
-  // 🏆 Longest reading streak
-  const longestStreak = readingList.length
-    ? Math.max(...readingList.map(daysReading))
-    : 0;
+  function openEdit() {
+    setEditForm(profileExtras);
+    setEditing(true);
+  }
 
-  // 🔹 Editing section
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    firstName: "",
-    lastName: "",
-    bio: "",
-    email: "",
-    avatar: defaultAvatar,
-  });
-
-  useEffect(() => {
-    if (user) {
-      setEditForm({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        bio: user.bio || "",
-        email: user.email || "",
-        avatar: user.avatar || defaultAvatar,
-      });
-    }
-  }, [user]);
-
-  const fullName =
-    (editForm.firstName + " " + editForm.lastName).trim() ||
-    user?.name ||
-    "User";
-
-  function handleFormChange(e) {
+  function handleEditChange(e) {
     const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
+    setEditForm((p) => ({
+      ...p,
+      [name]: name === "yearlyGoal" ? Number(value) : value,
+    }));
   }
 
-  function handleAvatarFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const previewUrl = URL.createObjectURL(file);
-    setEditForm((prev) => ({ ...prev, avatar: previewUrl }));
-  }
-
-  function handleAvatarRemove() {
-    setEditForm((prev) => ({ ...prev, avatar: defaultAvatar }));
-  }
-
-  // 🔹 Save profile changes
-  function handleSave() {
-    if (!user) return;
-
-    const updatedUser = {
-      ...user,
-      firstName: editForm.firstName.trim(),
-      lastName: editForm.lastName.trim(),
+  function saveProfile() {
+    const cleaned = {
       bio: editForm.bio.trim(),
-      avatar: editForm.avatar,
-      name:
-        (editForm.firstName.trim() + " " + editForm.lastName.trim()).trim() ||
-        user.name,
+      location: editForm.location.trim(),
+      favoriteGenre: editForm.favoriteGenre.trim(),
+      yearlyGoal: Number(editForm.yearlyGoal) || 0,
     };
 
-    if (localStorage.getItem("loggedInUser")) {
-      localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-    }
-    if (sessionStorage.getItem("loggedInUser")) {
-      sessionStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-    }
-
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const updatedUsers = users.map((u) =>
-      (u.email || "").trim().toLowerCase() ===
-      (user.email || "").trim().toLowerCase()
-        ? { ...u, ...updatedUser }
-        : u
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    setUser(updatedUser);
-    setIsEditing(false);
+    setProfileExtras(cleaned);
+    localStorage.setItem(`profile_${userId}`, JSON.stringify(cleaned));
+    setEditing(false);
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col bg-cover bg-center relative transition-all duration-[1500ms]"
-      style={{ backgroundImage: `url(${bgImages[bgIndex]})` }}
-    >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+    <div className="min-h-screen bg-white text-black dark:bg-[#020617] dark:text-white">
       <Navbar />
 
-      <main className="relative flex-grow w-full flex flex-col items-center px-6 pt-24 pb-16 text-white">
-        {!user ? (
-          <p className="mt-20 text-lg text-center text-yellow-300 font-semibold">
-            ⚠️ Please login to access your profile.
-          </p>
-        ) : (
-          <section className="w-full max-w-5xl flex flex-col lg:flex-row gap-8">
-            {/* Left card */}
-            <div className="bg-white/90 text-gray-900 rounded-2xl shadow-xl p-6 w-full max-w-sm mx-auto lg:mx-0 flex flex-col items-center">
-              <img
-                src={editForm.avatar || defaultAvatar}
-                alt={fullName}
-                className="h-28 w-28 rounded-full object-cover border-4 border-white shadow-md bg-gray-100"
-              />
-              <h2 className="mt-4 text-xl font-extrabold text-gray-900 drop-shadow-sm text-center">
-                {fullName}
-              </h2>
-              <p className="text-sm text-gray-600">
-                @{user.email.split("@")[0]}
-              </p>
-              <p className="mt-4 text-center text-sm text-gray-700 leading-relaxed">
-                {editForm.bio || "No bio yet."}
-              </p>
-              <p className="mt-4 text-[11px] text-gray-500 break-all text-center">
-                {user.email}
-              </p>
+      <main className="max-w-5xl mx-auto pt-24 pb-20 px-4 sm:px-6 space-y-8">
+        {/* HEADER + PROFILE CARD */}
+        <section className="relative bg-[#020617] rounded-3xl overflow-hidden shadow-xl border border-white/5">
+          <div className="h-32 bg-gradient-to-r from-pink-700 via-rose-500 to-amber-400" />
 
-              <button
-                onClick={() => setIsEditing(true)}
-                className="mt-6 w-full rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 text-white text-sm font-semibold py-2.5 shadow-lg hover:scale-[1.03] active:scale-[0.99] transition-transform"
-              >
-                Edit Profile
-              </button>
-
-              <div className="w-full mt-6">
-                <div className="flex items-center justify-between text-xs font-medium text-gray-700">
-                  <span>2025 Reading Goal</span>
-                  <span>{goalPercent}%</span>
+          <div className="px-6 sm:px-8 pb-8 -mt-12">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-6">
+              {/* AVATAR */}
+              <div className="flex items-center gap-4">
+                <div className="h-24 w-24 rounded-full bg-slate-900 border-4 border-[#020617] shadow-lg flex items-center justify-center overflow-hidden">
+                  {user.profilePic ? (
+                    <img
+                      src={user.profilePic}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-semibold">{initials}</span>
+                  )}
                 </div>
-                <div className="mt-2 h-2 w-full bg-gray-200 rounded-full overflow-hidden shadow-inner">
+
+                <div>
+                  <h1 className="text-3xl font-bold">{user.name}</h1>
+                  <p className="text-gray-300 text-sm">{user.email}</p>
+
+                  <button
+                    onClick={openEdit}
+                    className="mt-3 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black text-sm font-semibold shadow-md"
+                  >
+                    Edit Profile
+                  </button>
+                </div>
+              </div>
+
+              {/* GOAL TRACKER */}
+              <div className="ml-0 sm:ml-auto w-full sm:w-64">
+                <div className="flex justify-between text-xs text-gray-300 mb-1">
+                  <span>
+                    {profileExtras.yearlyGoal ? "Yearly Goal" : "No goal set"}
+                  </span>
+                  {profileExtras.yearlyGoal > 0 && (
+                    <span>
+                      {summary.finished}/{profileExtras.yearlyGoal}
+                    </span>
+                  )}
+                </div>
+
+                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-purple-600 to-pink-500"
+                    className="h-full bg-gradient-to-r from-emerald-400 to-lime-400"
                     style={{ width: `${goalPercent}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Right content */}
-            <div className="flex-1 flex flex-col gap-8">
-              {/* Stats */}
-              <div className="flex flex-wrap justify-center lg:justify-start gap-6">
-                <div className="w-32 h-32 flex flex-col items-center justify-center bg-white/90 rounded-full shadow-xl text-center">
-                  <div className="text-3xl font-extrabold text-gray-900 leading-none">
-                    {booksRead}
-                  </div>
-                  <div className="text-[11px] text-gray-600 font-medium mt-1 uppercase tracking-wide">
-                    Read
-                  </div>
-                </div>
+            {/* BIO */}
+            <p className="mt-6 text-gray-200 text-sm max-w-2xl">
+              {profileExtras.bio ||
+                "No bio yet. Click Edit Profile to add one."}
+            </p>
 
-                <div className="w-32 h-32 flex flex-col items-center justify-center bg-white/90 rounded-full shadow-xl text-center">
-                  <div className="text-3xl font-extrabold text-gray-900 leading-none">
-                    {inProgress}
-                  </div>
-                  <div className="text-[11px] text-gray-600 font-medium mt-1 uppercase tracking-wide">
-                    In Progress
-                  </div>
-                </div>
-
-                <div className="w-32 h-32 flex flex-col items-center justify-center bg-white/90 rounded-full shadow-xl text-center">
-                  <div className="text-3xl font-extrabold text-gray-900 leading-none">
-                    {wishlist}
-                  </div>
-                  <div className="text-[11px] text-gray-600 font-medium mt-1 uppercase tracking-wide">
-                    Wishlist
-                  </div>
-                </div>
-              </div>
-
-              {/* Extended Stats */}
-              <div className="mt-8 grid sm:grid-cols-3 gap-4 text-center text-sm text-gray-200">
-                <div className="bg-white/10 rounded-xl p-4 shadow-inner">
-                  <p className="text-2xl font-bold text-white">
-                    {totalDaysReading}
-                  </p>
-                  <p className="mt-1 text-gray-300">Total Days Reading</p>
-                </div>
-
-                <div className="bg-white/10 rounded-xl p-4 shadow-inner">
-                  <p className="text-2xl font-bold text-white">
-                    {avgProgress}%
-                  </p>
-                  <p className="mt-1 text-gray-300">Average Progress</p>
-                </div>
-
-                <div className="bg-white/10 rounded-xl p-4 shadow-inner">
-                  <p className="text-2xl font-bold text-white">
-                    {longestStreak}
-                  </p>
-                  <p className="mt-1 text-gray-300">Longest Streak (days)</p>
-                </div>
-              </div>
-
-              {/* History */}
-              <div className="bg-white/90 rounded-2xl shadow-xl p-5 text-left text-gray-900">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-base font-semibold text-gray-900">
-                    My History
-                  </div>
-                  <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                    Activity
-                  </div>
-                </div>
-
-                {readingList.length === 0 ? (
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    You haven’t added any books yet.
-                  </p>
-                ) : (
-                  <ul className="space-y-2 text-sm">
-                    {readingList
-                      .slice(-5)
-                      .reverse()
-                      .map((b) => (
-                        <li
-                          key={b.id}
-                          className="flex justify-between border-b border-gray-200 pb-1"
-                        >
-                          <span>
-                            <strong>{b.title}</strong>{" "}
-                            <span className="text-gray-500">
-                              (
-                              {b.status.charAt(0).toUpperCase() +
-                                b.status.slice(1)}
-                              )
-                            </span>
-                          </span>
-                          <span className="text-gray-400">{b.author}</span>
-                        </li>
-                      ))}
-                  </ul>
+            {/* LOCATION + FAVORITE GENRE FIXED */}
+            {(profileExtras.location || profileExtras.favoriteGenre) && (
+              <p className="mt-1 text-xs text-gray-400">
+                {profileExtras.location && (
+                  <span>{profileExtras.location}</span>
                 )}
+                {profileExtras.location && profileExtras.favoriteGenre && (
+                  <span className="mx-2">•</span>
+                )}
+                {profileExtras.favoriteGenre && (
+                  <span>Loves {profileExtras.favoriteGenre}</span>
+                )}
+              </p>
+            )}
+
+            {/* BOOK STATS */}
+            <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+              <div className="bg-white/5 rounded-2xl py-3">
+                <p className="text-xs text-gray-400">Reading</p>
+                <p className="mt-1 text-xl font-semibold">{summary.reading}</p>
+              </div>
+              <div className="bg-white/5 rounded-2xl py-3">
+                <p className="text-xs text-gray-400">Finished</p>
+                <p className="mt-1 text-xl font-semibold">{summary.finished}</p>
+              </div>
+              <div className="bg-white/5 rounded-2xl py-3">
+                <p className="text-xs text-gray-400">Wishlist</p>
+                <p className="mt-1 text-xl font-semibold">{summary.wishlist}</p>
               </div>
             </div>
-          </section>
-        )}
+
+            <p className="mt-3 text-xs text-gray-400">
+              Total books tracked: {totalBooks}
+            </p>
+          </div>
+        </section>
+
+        {/* ACTIVITY SECTION */}
+        <section className="bg-[#020617] rounded-3xl border border-white/5 p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Recent Activity</h2>
+            {activity.length > 0 && (
+              <span className="text-xs text-gray-400">
+                Showing last {activity.length} updates
+              </span>
+            )}
+          </div>
+
+          {loadingStats ? (
+            <p className="text-sm text-gray-400">Loading activity…</p>
+          ) : activity.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              You have no reading activity yet.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {activity.map((entry) => (
+                <li
+                  key={entry._id}
+                  className="flex justify-between border-b border-white/5 pb-3 last:border-none"
+                >
+                  <div>
+                    <p className="text-sm font-medium">
+                      {entry.book?.title || "Unknown title"}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {entry.status}{" "}
+                      {entry.progress != null &&
+                        entry.status !== "wishlist" &&
+                        `• ${entry.progress}%`}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {entry.updatedAt
+                      ? new Date(entry.updatedAt).toLocaleDateString()
+                      : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </main>
+
+      {/* EDIT PROFILE MODAL */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-[#020617] p-6 rounded-2xl border border-white/10 max-w-md w-full shadow-xl">
+            <h3 className="text-lg font-semibold mb-4">Edit Profile</h3>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <label className="block mb-1 text-gray-300">Bio</label>
+                <textarea
+                  name="bio"
+                  value={editForm.bio}
+                  onChange={handleEditChange}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-gray-300">Location</label>
+                <input
+                  name="location"
+                  value={editForm.location}
+                  onChange={handleEditChange}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-gray-300">
+                  Favorite Genre
+                </label>
+                <input
+                  name="favoriteGenre"
+                  value={editForm.favoriteGenre}
+                  onChange={handleEditChange}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-gray-300">Yearly Goal</label>
+                <input
+                  type="number"
+                  min="0"
+                  name="yearlyGoal"
+                  value={editForm.yearlyGoal}
+                  onChange={handleEditChange}
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3 text-sm">
+              <button
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveProfile}
+                className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 font-semibold"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
