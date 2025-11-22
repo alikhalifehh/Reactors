@@ -23,6 +23,7 @@ export default function BooksList() {
         const uniqueGenres = Array.from(
           new Set(res.data.map((b) => b.genre).filter(Boolean))
         );
+
         setGenres(uniqueGenres);
       } catch {
         console.log("Could not load books");
@@ -44,6 +45,7 @@ export default function BooksList() {
         status: "wishlist",
         progress: 0,
       });
+
       alert("Book added to your list");
     } catch (err) {
       const msg = err?.response?.data?.message;
@@ -64,7 +66,9 @@ export default function BooksList() {
       <div className="max-w-7xl mx-auto pt-24 px-6 pb-20">
         <h1 className="text-3xl font-bold mb-6">Explore Books</h1>
 
+        {/* SEARCH + GENRE FILTERS */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          {/* SEARCH BAR */}
           <input
             placeholder="Search by title"
             className="w-full sm:w-80 p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
@@ -72,6 +76,7 @@ export default function BooksList() {
             onChange={(e) => setSearch(e.target.value)}
           />
 
+          {/* GENRE FILTERS */}
           <div className="bg-gray-800 p-1 rounded-lg flex gap-1 flex-wrap">
             <button
               onClick={() => setActiveGenre("all")}
@@ -98,6 +103,7 @@ export default function BooksList() {
           </div>
         </div>
 
+        {/* BOOK GRID */}
         {filteredBooks.length === 0 ? (
           <p className="text-gray-400 mt-10">No books found.</p>
         ) : (
@@ -105,9 +111,10 @@ export default function BooksList() {
             {filteredBooks.map((b) => (
               <div
                 key={b._id}
-                className="bg-gray-800 rounded-xl shadow-lg p-5 flex flex-col hover:bg-gray-700 transition cursor-pointer"
                 onClick={() => navigate(`/books/${b._id}`)}
+                className="bg-gray-800 rounded-xl shadow-lg p-5 flex flex-col hover:bg-gray-700 transition cursor-pointer"
               >
+                {/* COVER */}
                 {b.coverUrl ? (
                   <img
                     src={b.coverUrl}
@@ -120,13 +127,16 @@ export default function BooksList() {
                   </div>
                 )}
 
+                {/* TITLE + AUTHOR */}
                 <h3 className="text-lg font-semibold mt-4">{b.title}</h3>
                 <p className="text-sm text-gray-400">{b.author}</p>
 
+                {/* DESCRIPTION */}
                 <p className="mt-3 text-xs text-gray-400 line-clamp-3">
                   {b.description || "No description provided"}
                 </p>
 
+                {/* BUTTON */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

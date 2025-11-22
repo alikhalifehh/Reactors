@@ -1,9 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { Sun, Moon } from "lucide-react";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -13,23 +12,24 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const dropdownRef = useRef(null);
-
   const { theme, toggleTheme } = useTheme();
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // ✅ Option A — Always redirect to HOME after logout
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    window.location.href = "/"; // 🚀 overrides ProtectedRoute & always goes home
   };
 
   return (
@@ -61,15 +61,23 @@ export default function Navbar() {
           <Link to="/add" className="hover:underline">
             Add & Edit
           </Link>
+
+          {/* THEME TOGGLE */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-95"
             aria-label="Toggle Theme"
           >
             {theme === "dark" ? (
-              <Sun size={18} className="text-yellow-300" />
+              <Sun
+                size={20}
+                className="text-yellow-300 transition-transform duration-300"
+              />
             ) : (
-              <Moon size={18} className="text-gray-800" />
+              <Moon
+                size={20}
+                className="text-gray-800 transition-transform duration-300"
+              />
             )}
           </button>
 
@@ -82,7 +90,6 @@ export default function Navbar() {
               >
                 Login
               </Link>
-
               <Link
                 to="/register"
                 className="px-5 py-2 border border-[#631730ff] text-[#631730ff] rounded-lg hover:bg-[#63173015] transition"
@@ -98,7 +105,7 @@ export default function Navbar() {
               >
                 <span>{user.name}</span>
                 <span
-                  className={`transition-transform ${
+                  className={`transition-transform duration-300 ${
                     dropdownOpen ? "rotate-180" : ""
                   }`}
                 >
@@ -120,7 +127,7 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* MOBILE BURGER ICON */}
+        {/* MOBILE BURGER */}
         <button
           className="md:hidden text-[#631730ff]"
           onClick={() => setMobileOpen((prev) => !prev)}
@@ -133,6 +140,19 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white pb-4 shadow-lg border-t text-[#631730ff]">
           <div className="px-6 py-4 flex flex-col gap-4 text-lg font-medium">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="self-start p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-95"
+            >
+              {theme === "dark" ? (
+                <Sun size={22} className="text-yellow-300" />
+              ) : (
+                <Moon size={22} className="text-gray-800" />
+              )}
+            </button>
+
+            {/* LINKS */}
             <Link to="/books" onClick={() => setMobileOpen(false)}>
               Books
             </Link>
@@ -146,6 +166,7 @@ export default function Navbar() {
               Add & Edit
             </Link>
 
+            {/* AUTH */}
             {!user ? (
               <>
                 <Link

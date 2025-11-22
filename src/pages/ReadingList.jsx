@@ -14,10 +14,12 @@ export default function ReadingList() {
   const [editingNotesId, setEditingNotesId] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
 
+  // Redirect user if not logged in
   useEffect(() => {
     if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
 
+  // Load reading list
   useEffect(() => {
     if (!user) return;
 
@@ -33,18 +35,21 @@ export default function ReadingList() {
     load();
   }, [user]);
 
+  // Update book entry
   async function updateEntry(id, data) {
     const res = await userBooksApi.update(id, data);
     setEntries((prev) => prev.map((e) => (e._id === id ? res.data : e)));
   }
 
+  // Remove book entry
   async function removeEntry(id) {
     if (!window.confirm("Remove this book from your list?")) return;
-
     await userBooksApi.delete(id);
+
     setEntries((prev) => prev.filter((e) => e._id !== id));
   }
 
+  // Notes editing
   function openNotes(entry) {
     setEditingNotesId(entry._id);
     setNotesDraft(entry.notes || "");
@@ -56,10 +61,12 @@ export default function ReadingList() {
     setNotesDraft("");
   }
 
+  // Rating
   async function setRating(entry, value) {
     await updateEntry(entry._id, { rating: value });
   }
 
+  // Filter entries
   const filtered =
     filter === "all" ? entries : entries.filter((e) => e.status === filter);
 
@@ -68,6 +75,7 @@ export default function ReadingList() {
       <Navbar />
 
       <div className="max-w-6xl mx-auto pt-24 px-6 pb-20">
+        {/* HEADER + FILTERS */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">My Library</h1>
 
@@ -89,6 +97,7 @@ export default function ReadingList() {
           </div>
         </div>
 
+        {/* EMPTY STATE */}
         {filtered.length === 0 ? (
           <p className="text-gray-400">No books to show yet.</p>
         ) : (
@@ -101,6 +110,7 @@ export default function ReadingList() {
                   key={entry._id}
                   className="bg-gray-800 rounded-xl p-5 flex gap-6 shadow-lg flex-col sm:flex-row"
                 >
+                  {/* COVER */}
                   <div className="flex-shrink-0">
                     {b.coverUrl ? (
                       <img
@@ -115,16 +125,19 @@ export default function ReadingList() {
                     )}
                   </div>
 
+                  {/* MAIN BOOK INFO */}
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <h3 className="text-lg font-semibold">{b.title}</h3>
                       <p className="text-sm text-gray-400">{b.author}</p>
 
+                      {/* PROGRESS BAR */}
                       <div className="mt-3">
                         <div className="flex justify-between text-xs mb-1">
                           <span>Progress</span>
                           <span>{entry.progress}%</span>
                         </div>
+
                         <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                           <div
                             className={
@@ -140,11 +153,13 @@ export default function ReadingList() {
                         </div>
                       </div>
 
+                      {/* STATUS + RATING */}
                       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                         <span className="text-xs text-gray-400">
                           Status: {entry.status}
                         </span>
 
+                        {/* STARS */}
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map((v) => (
                             <button
@@ -161,6 +176,7 @@ export default function ReadingList() {
                             </button>
                           ))}
                         </div>
+
                         {entry.rating ? (
                           <span className="text-xs text-gray-300">
                             {entry.rating} / 5
@@ -172,6 +188,7 @@ export default function ReadingList() {
                         )}
                       </div>
 
+                      {/* NOTES */}
                       <div className="mt-3 text-xs text-gray-300">
                         {editingNotesId === entry._id ? (
                           <div className="space-y-2">
@@ -182,6 +199,7 @@ export default function ReadingList() {
                               className="w-full rounded-md bg-gray-900 border border-gray-700 px-3 py-2 text-xs"
                               placeholder="Write your thoughts about this book"
                             />
+
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => {
@@ -192,6 +210,7 @@ export default function ReadingList() {
                               >
                                 Cancel
                               </button>
+
                               <button
                                 onClick={() => saveNotes(entry)}
                                 className="px-3 py-1 rounded-md bg-pink-600 hover:bg-pink-500 text-xs font-semibold"
@@ -207,6 +226,7 @@ export default function ReadingList() {
                                 ? entry.notes
                                 : "No notes yet. Add your thoughts."}
                             </p>
+
                             <button
                               onClick={() => openNotes(entry)}
                               className="ml-4 px-3 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs whitespace-nowrap"
@@ -218,7 +238,9 @@ export default function ReadingList() {
                       </div>
                     </div>
 
+                    {/* ACTION BUTTONS */}
                     <div className="flex gap-2 mt-4 flex-wrap">
+                      {/* READING ACTIONS */}
                       {entry.status === "reading" && (
                         <>
                           <button
@@ -257,6 +279,7 @@ export default function ReadingList() {
                         </>
                       )}
 
+                      {/* WISHLIST ACTIONS */}
                       {entry.status === "wishlist" && (
                         <button
                           onClick={() =>
@@ -271,6 +294,7 @@ export default function ReadingList() {
                         </button>
                       )}
 
+                      {/* REMOVE */}
                       <button
                         onClick={() => removeEntry(entry._id)}
                         className="px-3 py-1 bg-red-500 rounded-md text-sm text-black font-semibold"

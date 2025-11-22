@@ -19,6 +19,7 @@ export default function BookDetail() {
     async function load() {
       try {
         setLoading(true);
+
         const res = await booksApi.getOne(id);
         const current = res.data;
         setBook(current);
@@ -27,6 +28,7 @@ export default function BookDetail() {
         const sameAuthor = all.data.filter(
           (b) => b.author === current.author && b._id !== id
         );
+
         setOthers(sameAuthor);
       } catch {
         console.log("Could not load book");
@@ -44,10 +46,12 @@ export default function BookDetail() {
 
     try {
       setAdding(true);
+
       await userBooksApi.create({
         bookId: book._id,
         status: "wishlist",
       });
+
       alert("Added to your reading list");
     } catch (err) {
       alert(err?.response?.data?.message || "Could not add this book");
@@ -84,7 +88,7 @@ export default function BookDetail() {
           ← Back to all books
         </button>
 
-        {/* MAIN BOOK BLOCK */}
+        {/* MAIN BLOCK */}
         <section className="bg-slate-900 rounded-3xl shadow-2xl border border-white/5 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-[290px,1fr]">
             {/* COVER */}
@@ -148,17 +152,19 @@ export default function BookDetail() {
             {/* ABOUT */}
             <div>
               <h2 className="text-lg font-semibold mb-2">About this book</h2>
+
               <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-line">
                 {book.description ||
                   "No full description has been added for this book yet."}
               </p>
             </div>
 
-            {/* DETAILS TABLE */}
+            {/* DETAILS */}
             <div className="bg-slate-950/60 rounded-2xl border border-slate-800 p-4 text-sm">
               <h3 className="text-sm font-semibold mb-3 text-gray-100">
                 Details
               </h3>
+
               <dl className="space-y-1.5 text-gray-300 text-xs sm:text-sm">
                 {book.genre && (
                   <div className="flex justify-between gap-3">
@@ -166,12 +172,14 @@ export default function BookDetail() {
                     <dd className="font-medium text-right">{book.genre}</dd>
                   </div>
                 )}
+
                 {book.pages && (
                   <div className="flex justify-between gap-3">
                     <dt className="text-gray-400">Pages</dt>
                     <dd className="font-medium text-right">{book.pages}</dd>
                   </div>
                 )}
+
                 {book.publishedYear && (
                   <div className="flex justify-between gap-3">
                     <dt className="text-gray-400">Published</dt>
@@ -180,16 +188,19 @@ export default function BookDetail() {
                     </dd>
                   </div>
                 )}
+
                 {book.publisher && (
                   <div className="flex justify-between gap-3">
                     <dt className="text-gray-400">Publisher</dt>
                     <dd className="font-medium text-right">{book.publisher}</dd>
                   </div>
                 )}
+
                 <div className="flex justify-between gap-3">
                   <dt className="text-gray-400">Added by</dt>
                   <dd className="font-medium text-right">Admin</dd>
                 </div>
+
                 {addedOn && (
                   <div className="flex justify-between gap-3">
                     <dt className="text-gray-400">Added on</dt>
@@ -216,6 +227,7 @@ export default function BookDetail() {
                   className="bg-slate-900 rounded-2xl border border-slate-800 p-4 cursor-pointer hover:bg-slate-800 transition shadow-md flex flex-col gap-2"
                 >
                   <p className="font-semibold text-sm">{o.title}</p>
+
                   <p className="text-xs text-gray-400 line-clamp-3">
                     {o.description || "No description available yet."}
                   </p>

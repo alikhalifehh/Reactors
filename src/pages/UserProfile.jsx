@@ -9,7 +9,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  // consistent user ID fix
+  // consistent ID
   const userId = user?.id || user?._id;
 
   const [summary, setSummary] = useState({
@@ -41,11 +41,12 @@ export default function UserProfile() {
     if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
 
-  // Load saved profile info
+  // Load profile info from localStorage
   useEffect(() => {
     if (!userId) return;
 
     const stored = localStorage.getItem(`profile_${userId}`);
+
     if (stored) {
       try {
         setProfileExtras(JSON.parse(stored));
@@ -60,12 +61,13 @@ export default function UserProfile() {
     }
   }, [userId]);
 
-  // Load stats + activity
+  // Load stats & activity
   useEffect(() => {
     if (!user) return;
 
     async function loadStats() {
       setLoadingStats(true);
+
       try {
         const [summaryRes, listRes] = await Promise.allSettled([
           userBooksApi.getSummary(),
@@ -95,6 +97,7 @@ export default function UserProfile() {
     loadStats();
   }, [user]);
 
+  // Loading screen
   if (loading) {
     return (
       <div className="min-h-screen bg-[#020617] text-white">
@@ -109,9 +112,9 @@ export default function UserProfile() {
 
   if (!user) return null;
 
-  // avatar initials
+  // User initials for avatar
   const initials =
-    user.name
+    user?.name
       ?.split(" ")
       .map((n) => n[0])
       .join("")
@@ -134,6 +137,7 @@ export default function UserProfile() {
 
   function handleEditChange(e) {
     const { name, value } = e.target;
+
     setEditForm((p) => ({
       ...p,
       [name]: name === "yearlyGoal" ? Number(value) : value,
@@ -158,7 +162,7 @@ export default function UserProfile() {
       <Navbar />
 
       <main className="max-w-5xl mx-auto pt-24 pb-20 px-4 sm:px-6 space-y-8">
-        {/* HEADER + PROFILE CARD */}
+        {/* PROFILE CARD */}
         <section className="relative bg-[#020617] rounded-3xl overflow-hidden shadow-xl border border-white/5">
           <div className="h-32 bg-gradient-to-r from-pink-700 via-rose-500 to-amber-400" />
 
@@ -197,6 +201,7 @@ export default function UserProfile() {
                   <span>
                     {profileExtras.yearlyGoal ? "Yearly Goal" : "No goal set"}
                   </span>
+
                   {profileExtras.yearlyGoal > 0 && (
                     <span>
                       {summary.finished}/{profileExtras.yearlyGoal}
@@ -219,15 +224,17 @@ export default function UserProfile() {
                 "No bio yet. Click Edit Profile to add one."}
             </p>
 
-            {/* LOCATION + FAVORITE GENRE FIXED */}
+            {/* LOCATION + FAVORITE GENRE */}
             {(profileExtras.location || profileExtras.favoriteGenre) && (
               <p className="mt-1 text-xs text-gray-400">
                 {profileExtras.location && (
                   <span>{profileExtras.location}</span>
                 )}
+
                 {profileExtras.location && profileExtras.favoriteGenre && (
                   <span className="mx-2">•</span>
                 )}
+
                 {profileExtras.favoriteGenre && (
                   <span>Loves {profileExtras.favoriteGenre}</span>
                 )}
@@ -240,10 +247,12 @@ export default function UserProfile() {
                 <p className="text-xs text-gray-400">Reading</p>
                 <p className="mt-1 text-xl font-semibold">{summary.reading}</p>
               </div>
+
               <div className="bg-white/5 rounded-2xl py-3">
                 <p className="text-xs text-gray-400">Finished</p>
                 <p className="mt-1 text-xl font-semibold">{summary.finished}</p>
               </div>
+
               <div className="bg-white/5 rounded-2xl py-3">
                 <p className="text-xs text-gray-400">Wishlist</p>
                 <p className="mt-1 text-xl font-semibold">{summary.wishlist}</p>
@@ -260,6 +269,7 @@ export default function UserProfile() {
         <section className="bg-[#020617] rounded-3xl border border-white/5 p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
+
             {activity.length > 0 && (
               <span className="text-xs text-gray-400">
                 Showing last {activity.length} updates
@@ -284,13 +294,14 @@ export default function UserProfile() {
                     <p className="text-sm font-medium">
                       {entry.book?.title || "Unknown title"}
                     </p>
+
                     <p className="text-xs text-gray-400">
                       {entry.status}{" "}
                       {entry.progress != null &&
-                        entry.status !== "wishlist" &&
-                        `• ${entry.progress}%`}
+                        entry.status !== "wishlist" && <>• {entry.progress}%</>}
                     </p>
                   </div>
+
                   <p className="text-xs text-gray-400">
                     {entry.updatedAt
                       ? new Date(entry.updatedAt).toLocaleDateString()
@@ -363,6 +374,7 @@ export default function UserProfile() {
               >
                 Cancel
               </button>
+
               <button
                 onClick={saveProfile}
                 className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 font-semibold"

@@ -2,13 +2,15 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-// Shared axios instance for all API calls
+// shared axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // send and receive cookies
+  withCredentials: true,
 });
 
-// Authentication related calls
+api.defaults.withCredentials = true;
+
+// auth endpoints
 export const authApi = {
   register: (data) => api.post("/auth/register", data),
   login: (data) => api.post("/auth/login", data),
@@ -17,9 +19,18 @@ export const authApi = {
   getMe: () => api.get("/auth/me"),
   logout: () => api.post("/auth/logout"),
   getGoogleUrl: () => `${API_URL}/auth/google`,
+
+  // forgot password
+  forgotPassword: (data) => api.post("/auth/forgot-password", data),
+
+  // verify reset OTP
+  verifyResetOtp: (data) => api.post("/auth/verify-reset-otp", data),
+
+  // set new password
+  resetPassword: (data) => api.post("/auth/reset-password", data),
 };
 
-// Book CRUD endpoints
+// book endpoints
 export const booksApi = {
   getAll: () => api.get("/books"),
   create: (data) => api.post("/books", data),
@@ -29,7 +40,7 @@ export const booksApi = {
   delete: (id) => api.delete(`/books/${id}`),
 };
 
-// User-book related endpoints (reading list, progress, etc.)
+// userbooks endpoints
 export const userBooksApi = {
   getList: () => api.get("/userbooks"),
   getSummary: () => api.get("/userbooks/summary"),

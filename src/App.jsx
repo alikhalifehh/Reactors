@@ -1,58 +1,33 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-
-import Navbar from "./components/Navbar.jsx";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import BooksList from "./pages/BooksList";
 import BookDetail from "./pages/BookDetail";
-import UserProfile from "./pages/UserProfile";
-import ReadingList from "./pages/ReadingList";
 import AddEditBook from "./pages/AddEditBook";
+import ReadingList from "./pages/ReadingList";
+import UserProfile from "./pages/UserProfile";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+import { AuthProvider } from "./context/AuthContext";
 import OtpModal from "./components/OtpModal";
 
 export default function App() {
   return (
-    <Router>
-      <Navbar />
+    <BrowserRouter>
+      <AuthProvider>
+        {/* Modal MUST be inside AuthProvider and BrowserRouter */}
+        <OtpModal />
 
-      {/* OTP modal is global */}
-      <OtpModal />
-
-      <main className="pt-24">
         <Routes>
-          {/* Public pages */}
+          {/* PUBLIC ROUTES */}
           <Route path="/" element={<HomePage />} />
           <Route path="/books" element={<BooksList />} />
           <Route path="/books/:id" element={<BookDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected pages */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/reading-list"
-            element={
-              <ProtectedRoute>
-                <ReadingList />
-              </ProtectedRoute>
-            }
-          />
-
+          {/* PROTECTED ROUTES */}
           <Route
             path="/add"
             element={
@@ -61,20 +36,24 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
-            path="/edit/:id"
+            path="/reading-list"
             element={
               <ProtectedRoute>
-                <AddEditBook />
+                <ReadingList />
               </ProtectedRoute>
             }
           />
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-      </main>
-    </Router>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

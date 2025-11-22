@@ -4,16 +4,16 @@ import { authApi } from "../services/api";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // current user object
-  const [loading, setLoading] = useState(true); // true while checking session
-  const [mfaData, setMfaData] = useState(null); // { userId, email } for OTP modal
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mfaData, setMfaData] = useState(null);
 
-  // Ask the backend who is currently logged in (based on cookie)
+  // fetch user
   const fetchUser = async () => {
     try {
       const res = await authApi.getMe();
       setUser(res.data.user);
-    } catch {
+    } catch (err) {
       setUser(null);
     } finally {
       setLoading(false);
@@ -24,20 +24,23 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  // Start Google login by redirecting to backend /auth/google
+  // google login
   const loginWithGoogle = () => {
     window.location.href = authApi.getGoogleUrl();
   };
+
+  // register
   const register = async (data) => {
     try {
       const res = await authApi.register(data);
 
-      setMfaData({
+      // backend returns: success, mfa, email, userId
+      return {
+        success: true,
         userId: res.data.userId,
         email: res.data.email,
-      });
-
-      return { success: true };
+        mfa: true,
+      };
     } catch (err) {
       return {
         success: false,
@@ -46,10 +49,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Email login for local accounts
+  // login
   const login = async (data) => {
     try {
       const res = await authApi.login(data);
+
+      if (res.data.mfa) {
+        setMfaData({
+          userId: res.data.userId,
+          email: res.data.email,
+          mode: "verify-login",
+        });
+        return { mfa: true };
+      }
+
       setUser(res.data.user);
       return { success: true };
     } catch (err) {
@@ -60,13 +73,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Verify the OTP code sent by email
+  // verify otp
   const verifyOtp = async ({ userId, otp }) => {
     try {
       const res = await authApi.verifyOtp({ userId, otp });
 
       setUser(res.data.user);
-      setMfaData(null); // close OTP modal
+      setMfaData(null);
 
       return { success: true };
     } catch (err) {
@@ -77,23 +90,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Ask backend to resend a verification code
+  // resend otp
   const resendOtp = async (userId) => {
     try {
       await authApi.resendOtp({ userId });
       return { success: true };
-    } catch {
+    } catch (err) {
       return { success: false };
     }
   };
 
-  // Clear session in backend and reset user on frontend
+  // logout
   const logout = async () => {
     try {
       await authApi.logout();
-    } catch {
-      // ignore error, still clear local state
-    }
+    } catch (err) {}
     setUser(null);
   };
 
@@ -118,5 +129,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Simple hook for using the auth context
 export const useAuth = () => useContext(AuthContext);

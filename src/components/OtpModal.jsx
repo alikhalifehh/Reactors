@@ -6,22 +6,19 @@ export default function OtpModal() {
   const { mfaData, verifyOtp, resendOtp, setMfaData } = useAuth();
   const navigate = useNavigate();
 
-  // If no MFA required -> modal hidden
-  if (!mfaData) return null;
-
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [resent, setResent] = useState(false);
 
-  // reset modal state whenever a new MFA event occurs
   useEffect(() => {
     setOtp("");
     setMessage("");
     setResent(false);
   }, [mfaData]);
 
-  // OTP verification
+  if (!mfaData) return null;
+
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -37,13 +34,11 @@ export default function OtpModal() {
     if (!res.success) {
       setMessage(res.message);
     } else {
-      // success -> close modal + redirect
       setMfaData(null);
-      navigate("/"); // home (or saved previous route)
+      setTimeout(() => navigate("/"), 0);
     }
   };
 
-  // resend OTP
   const handleResend = async () => {
     setResent(false);
     const res = await resendOtp(mfaData.userId);
@@ -103,7 +98,6 @@ export default function OtpModal() {
           )}
         </form>
 
-        {/* Cancel button */}
         <button
           onClick={() => setMfaData(null)}
           className="mt-4 w-full text-center text-gray-600 text-sm hover:underline"
