@@ -5,6 +5,9 @@ import { booksApi, userBooksApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+import { fetchGoogleCover } from "../utils/fetchCover";
+import { getCachedCover, cacheCover } from "../utils/coverCache";
+
 export default function BooksList() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -18,13 +21,44 @@ export default function BooksList() {
     async function load() {
       try {
         const res = await booksApi.getAll();
-        setBooks(res.data);
+        const rawBooks = res.data;
+
+        setBooks(rawBooks);
 
         const uniqueGenres = Array.from(
-          new Set(res.data.map((b) => b.genre).filter(Boolean))
+          new Set(rawBooks.map((b) => b.genre).filter(Boolean))
         );
-
         setGenres(uniqueGenres);
+
+        rawBooks.forEach(async (b) => {
+          // Skip if book already has a cover
+          if (b.coverImage) return;
+
+          // Check cache
+          const cached = getCachedCover(b.title);
+          if (cached) {
+            setBooks((prev) =>
+              prev.map((x) =>
+                x._id === b._id ? { ...x, coverImage: cached } : x
+              )
+            );
+            return;
+          }
+
+          // Fetch from Google
+          const autoCover = await fetchGoogleCover(b.title);
+
+          if (autoCover) {
+            cacheCover(b.title, autoCover);
+
+            // live state update
+            setBooks((prev) =>
+              prev.map((x) =>
+                x._id === b._id ? { ...x, coverImage: autoCover } : x
+              )
+            );
+          }
+        });
       } catch {
         console.log("Could not load books");
       }
@@ -115,16 +149,18 @@ export default function BooksList() {
                 className="bg-gray-800 rounded-xl shadow-lg p-5 flex flex-col hover:bg-gray-700 transition cursor-pointer"
               >
                 {/* COVER */}
-                {b.coverUrl ? (
+                {b.coverImage ? (
                   <img
-                    src={b.coverUrl}
+                    src={b.coverImage}
                     alt={b.title}
                     className="h-48 w-full object-cover rounded-lg border border-gray-700"
                   />
                 ) : (
-                  <div className="h-48 w-full bg-gray-700 rounded-lg flex items-center justify-center text-gray-300 text-sm">
-                    No cover available
-                  </div>
+                  <img
+                    src="https://via.placeholder.com/300x450/1e293b/ffffff?text=No+Cover"
+                    alt="No cover"
+                    className="h-48 w-full object-cover rounded-lg border border-gray-700"
+                  />
                 )}
 
                 {/* TITLE + AUTHOR */}
