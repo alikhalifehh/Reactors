@@ -17,7 +17,7 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // validate name, email, password, confirm password
+  // Validate all fields
   const validateForm = () => {
     const newErrors = {};
 
@@ -54,7 +54,7 @@ export default function Register() {
     return newErrors;
   };
 
-  // password strength meter
+  // Password strength meter
   const evaluatePasswordStrength = (value) => {
     let score = 0;
     if (value.length >= 8) score++;
@@ -68,7 +68,7 @@ export default function Register() {
     return 3;
   };
 
-  // submit handler
+  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -94,7 +94,7 @@ export default function Register() {
       return;
     }
 
-    // Show OTP modal (IMPORTANT)
+    // OTP modal
     if (res.mfa) {
       setMfaData({
         userId: res.userId,
@@ -117,6 +117,30 @@ export default function Register() {
           {errors.server && (
             <p className="text-red-600 text-center mb-3">{errors.server}</p>
           )}
+
+          {/* Google Sign Up */}
+          <button
+            onClick={() => {
+              window.location.href = "http://localhost:5000/api/auth/google";
+            }}
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 mb-6 rounded-lg hover:bg-gray-100 transition"
+          >
+            <img
+              src="https://developers.google.com/identity/images/g-logo.png"
+              alt="Google Logo"
+              className="w-5 h-5"
+            />
+            <span className="text-gray-700 font-medium">
+              Sign up with Google
+            </span>
+          </button>
+
+          {/* Divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-grow h-px bg-gray-300"></div>
+            <span className="px-4 text-gray-500 text-sm">OR</span>
+            <div className="flex-grow h-px bg-gray-300"></div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name */}
@@ -171,6 +195,7 @@ export default function Register() {
                 <p className="text-red-500 text-sm">{errors.password}</p>
               )}
 
+              {/* Strength Meter */}
               <div className="w-full mt-2">
                 <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden">
                   <div
