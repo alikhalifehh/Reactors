@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import Navbar from "../components/Navbar";
 
 export default function Register() {
   const { register, setMfaData } = useAuth();
+  const { theme } = useTheme();
 
   const [form, setForm] = useState({
     name: "",
@@ -17,24 +19,20 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // Validate all fields
   const validateForm = () => {
     const newErrors = {};
 
-    // Name
     if (form.name.trim().length < 2)
       newErrors.name = "Name must be at least 2 characters.";
     if (form.name.trim().length > 30)
       newErrors.name = "Name cannot exceed 30 characters.";
     if (/\d/.test(form.name)) newErrors.name = "Name cannot contain numbers.";
 
-    // Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       newErrors.email = "Enter a valid email.";
     }
 
-    // Password rules
     const { password } = form;
     if (password.length < 8)
       newErrors.password = "Minimum length is 8 characters.";
@@ -47,14 +45,12 @@ export default function Register() {
     else if (!/[@$!%*?&]/.test(password))
       newErrors.password = "At least one special character required.";
 
-    // Confirm password
     if (form.password !== form.confirmPassword)
       newErrors.confirmPassword = "Passwords do not match.";
 
     return newErrors;
   };
 
-  // Password strength meter
   const evaluatePasswordStrength = (value) => {
     let score = 0;
     if (value.length >= 8) score++;
@@ -68,7 +64,6 @@ export default function Register() {
     return 3;
   };
 
-  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -94,7 +89,6 @@ export default function Register() {
       return;
     }
 
-    // OTP modal
     if (res.mfa) {
       setMfaData({
         userId: res.userId,
@@ -108,8 +102,12 @@ export default function Register() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gray-100 flex items-center justify-center pt-24 px-4">
-        <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+      <main className={`min-h-screen flex items-center justify-center pt-24 px-4 transition-colors duration-300 ${
+        theme === "dark" ? "bg-zinc-950" : "bg-gray-100"
+      }`}>
+        <section className={`w-full max-w-md rounded-2xl shadow-lg p-8 ${
+          theme === "dark" ? "bg-zinc-900 text-white" : "bg-white text-black"
+        }`}>
           <h1 className="text-3xl font-bold text-center mb-6 text-[#660000]">
             Create Your Account
           </h1>
@@ -118,37 +116,44 @@ export default function Register() {
             <p className="text-red-600 text-center mb-3">{errors.server}</p>
           )}
 
-          {/* Google Sign Up */}
           <button
             onClick={() => {
               window.location.href = "http://localhost:5000/api/auth/google";
             }}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 mb-6 rounded-lg hover:bg-gray-100 transition"
+            className={`w-full flex items-center justify-center gap-3 border py-2 mb-6 rounded-lg transition ${
+              theme === "dark"
+                ? "border-zinc-700 hover:bg-zinc-800"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
           >
             <img
               src="https://developers.google.com/identity/images/g-logo.png"
               alt="Google Logo"
               className="w-5 h-5"
             />
-            <span className="text-gray-700 font-medium">
+            <span className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-700"}`}>
               Sign up with Google
             </span>
           </button>
 
-          {/* Divider */}
           <div className="flex items-center my-6">
-            <div className="flex-grow h-px bg-gray-300"></div>
-            <span className="px-4 text-gray-500 text-sm">OR</span>
-            <div className="flex-grow h-px bg-gray-300"></div>
+            <div className={`flex-grow h-px ${theme === "dark" ? "bg-zinc-700" : "bg-gray-300"}`}></div>
+            <span className={`px-4 text-sm ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>OR</span>
+            <div className={`flex-grow h-px ${theme === "dark" ? "bg-zinc-700" : "bg-gray-300"}`}></div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
             <div>
-              <label className="block text-sm mb-1">Full Name</label>
+              <label className={`block text-sm mb-1 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                Full Name
+              </label>
               <input
                 type="text"
-                className="w-full border rounded-lg px-3 py-2"
+                className={`w-full border rounded-lg px-3 py-2 ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="John Doe"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -159,12 +164,17 @@ export default function Register() {
               )}
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm mb-1">Email</label>
+              <label className={`block text-sm mb-1 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                Email
+              </label>
               <input
                 type="email"
-                className="w-full border rounded-lg px-3 py-2"
+                className={`w-full border rounded-lg px-3 py-2 ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -175,12 +185,17 @@ export default function Register() {
               )}
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-sm mb-1">Password</label>
+              <label className={`block text-sm mb-1 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                Password
+              </label>
               <input
                 type="password"
-                className="w-full border rounded-lg px-3 py-2"
+                className={`w-full border rounded-lg px-3 py-2 ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => {
@@ -195,9 +210,10 @@ export default function Register() {
                 <p className="text-red-500 text-sm">{errors.password}</p>
               )}
 
-              {/* Strength Meter */}
               <div className="w-full mt-2">
-                <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden">
+                <div className={`h-2 w-full rounded-full overflow-hidden ${
+                  theme === "dark" ? "bg-zinc-700" : "bg-gray-300"
+                }`}>
                   <div
                     className={`h-full transition-all duration-500 ${
                       passwordStrength === 1
@@ -211,12 +227,17 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div>
-              <label className="block text-sm mb-1">Confirm Password</label>
+              <label className={`block text-sm mb-1 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                Confirm Password
+              </label>
               <input
                 type="password"
-                className="w-full border rounded-lg px-3 py-2"
+                className={`w-full border rounded-lg px-3 py-2 ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="••••••••"
                 value={form.confirmPassword}
                 onChange={(e) =>
@@ -232,13 +253,13 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#660000] hover:bg-[#550000] text-white py-2 rounded-lg disabled:opacity-50"
+              className="w-full bg-[#660000] hover:bg-[#550000] text-white py-2 rounded-lg disabled:opacity-50 transition"
             >
               {loading ? "Registering..." : "Register"}
             </button>
           </form>
 
-          <p className="text-center text-sm mt-6">
+          <p className={`text-center text-sm mt-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
             Already have an account?{" "}
             <Link
               to="/login"

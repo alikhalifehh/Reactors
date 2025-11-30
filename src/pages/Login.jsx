@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import Navbar from "../components/Navbar";
 
 // ---- Forgot Password Modal ----
 export function ForgotPasswordModal({ initialEmail = "", onClose }) {
-  const [step, setStep] = useState(1); // 1 email, 2 code, 3 password
+  const { theme } = useTheme();
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState("");
   const [userId, setUserId] = useState(null);
@@ -21,7 +23,6 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-  // ---- Password strength evaluation ----
   const evaluatePasswordStrength = (value) => {
     let score = 0;
     if (value.length >= 8) score++;
@@ -48,7 +49,6 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
     return "";
   };
 
-  // ---- STEP 1: Send Reset Email ----
   const handleSendEmail = async () => {
     setError("");
     setMessage("");
@@ -84,7 +84,6 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
     }
   };
 
-  // ---- STEP 2: Verify Code ----
   const handleVerifyCode = async () => {
     setError("");
     setMessage("");
@@ -119,7 +118,6 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
     }
   };
 
-  // ---- STEP 3: Reset Password ----
   const handleResetPassword = async () => {
     setError("");
     setMessage("");
@@ -158,11 +156,15 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 relative">
+      <div className={`rounded-2xl shadow-lg w-full max-w-md p-6 relative ${
+        theme === "dark" ? "bg-zinc-900 text-white" : "bg-white text-black"
+      }`}>
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-black"
+          className={`absolute top-3 right-3 ${
+            theme === "dark" ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-black"
+          }`}
         >
           ✕
         </button>
@@ -171,7 +173,7 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
           Forgot Password
         </h2>
 
-        <p className="text-sm text-gray-600 mb-4 text-center">
+        <p className={`text-sm mb-4 text-center ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
           {step === 1 && "Enter your email to receive a reset code."}
           {step === 2 && "Enter the 6-digit code sent to your email."}
           {step === 3 && "Choose a new password for your account."}
@@ -185,16 +187,20 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
           <p className="text-sm text-green-600 text-center mb-3">{message}</p>
         )}
 
-        {/* ---- STEP 1: Enter Email ---- */}
+        {/* STEP 1: Enter Email */}
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className={`block text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                 Email Address
               </label>
               <input
                 type="email"
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff]"
+                className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff] ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -211,16 +217,20 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
           </div>
         )}
 
-        {/* ---- STEP 2: Enter Code ---- */}
+        {/* STEP 2: Enter Code */}
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className={`block text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                 Verification Code
               </label>
               <input
                 type="text"
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff]"
+                className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff] ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="Enter 6-digit code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
@@ -237,18 +247,21 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
           </div>
         )}
 
-        {/* ---- STEP 3: New Password ---- */}
+        {/* STEP 3: New Password */}
         {step === 3 && (
           <div className="space-y-4">
-            {/* NEW PASSWORD */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className={`block text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                 New Password
               </label>
 
               <input
                 type="password"
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff]"
+                className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff] ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={(e) => {
@@ -258,9 +271,8 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
                 }}
               />
 
-              {/* Password meter */}
               <div className="w-full mt-2">
-                <div className="h-2 bg-gray-300 rounded-full overflow-hidden">
+                <div className={`h-2 rounded-full overflow-hidden ${theme === "dark" ? "bg-zinc-700" : "bg-gray-300"}`}>
                   <div
                     className={`
                       h-full transition-all duration-500
@@ -298,15 +310,18 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
               )}
             </div>
 
-            {/* CONFIRM PASSWORD */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className={`block text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                 Confirm New Password
               </label>
 
               <input
                 type="password"
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff]"
+                className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff] ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="••••••••"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
@@ -316,7 +331,11 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
             <button
               onClick={handleResetPassword}
               disabled={loading}
-              className="w-full bg-gray-900 hover:bg-black text-white py-2.5 rounded-lg font-semibold transition disabled:opacity-50"
+              className={`w-full py-2.5 rounded-lg font-semibold transition disabled:opacity-50 ${
+                theme === "dark"
+                  ? "bg-zinc-700 hover:bg-zinc-600 text-white"
+                  : "bg-gray-900 hover:bg-black text-white"
+              }`}
             >
               {loading ? "Saving..." : "Save New Password"}
             </button>
@@ -330,6 +349,7 @@ export function ForgotPasswordModal({ initialEmail = "", onClose }) {
 // ---- Main Login Component ----
 export default function Login() {
   const { loginWithGoogle, login, setMfaData } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -351,7 +371,6 @@ export default function Login() {
 
     setLoading(false);
 
-    // MFA flow
     if (res.mfa) {
       setMfaData({
         userId: res.userId,
@@ -371,14 +390,18 @@ export default function Login() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-100 flex items-center justify-center pt-24 px-4">
-        <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+      <main className={`min-h-screen flex items-center justify-center pt-24 px-4 transition-colors duration-300 ${
+        theme === "dark" ? "bg-zinc-950" : "bg-gray-100"
+      }`}>
+        <section className={`w-full max-w-md rounded-2xl shadow-lg p-8 ${
+          theme === "dark" ? "bg-zinc-900 text-white" : "bg-white text-black"
+        }`}>
           {/* HEADER */}
           <header className="text-center mb-6">
             <h1 className="text-3xl font-bold text-[#631730ff]">
               Welcome Back
             </h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className={`text-sm mt-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
               Log in to continue your reading journey 📚
             </p>
           </header>
@@ -398,37 +421,43 @@ export default function Login() {
 
           {/* DIVIDER */}
           <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-300" />
-            <span className="text-xs text-gray-400">OR</span>
-            <div className="flex-1 h-px bg-gray-300" />
+            <div className={`flex-1 h-px ${theme === "dark" ? "bg-zinc-700" : "bg-gray-300"}`} />
+            <span className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>OR</span>
+            <div className={`flex-1 h-px ${theme === "dark" ? "bg-zinc-700" : "bg-gray-300"}`} />
           </div>
 
           {/* EMAIL LOGIN FORM */}
           <div className="space-y-4">
-            {/* EMAIL */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className={`block text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                 Email Address
               </label>
 
               <input
                 type="email"
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff]"
+                className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff] ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
-            {/* PASSWORD */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className={`block text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                 Password
               </label>
 
               <input
                 type="password"
-                className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff]"
+                className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#631730ff] ${
+                  theme === "dark"
+                    ? "bg-zinc-800 border-zinc-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -445,25 +474,27 @@ export default function Login() {
               </p>
             </div>
 
-            {/* ERRORS */}
             {customLoginError && (
               <p className="text-sm text-red-600 text-center">
                 {customLoginError}
               </p>
             )}
 
-            {/* SUBMIT */}
             <button
               onClick={handleEmailLogin}
               disabled={loading}
-              className="w-full bg-gray-900 hover:bg-black text-white py-2.5 rounded-lg font-semibold transition disabled:opacity-50"
+              className={`w-full py-2.5 rounded-lg font-semibold transition disabled:opacity-50 ${
+                theme === "dark"
+                  ? "bg-zinc-700 hover:bg-zinc-600 text-white"
+                  : "bg-gray-900 hover:bg-black text-white"
+              }`}
             >
               {loading ? "Logging in..." : "Login"}
             </button>
           </div>
 
-          <footer className="text-center text-sm text-gray-600 mt-6">
-            Don’t have an account?{" "}
+          <footer className={`text-center text-sm mt-6 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            Don't have an account?{" "}
             <Link
               to="/register"
               className="text-[#631730ff] font-semibold hover:underline"

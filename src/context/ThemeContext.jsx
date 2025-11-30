@@ -4,24 +4,43 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    // Load saved theme OR default to dark
-    return localStorage.getItem("theme") || "dark";
+    try {
+      const saved = localStorage.getItem("theme");
+      console.log("Initial theme from localStorage:", saved);
+      // If nothing saved, default to light
+      return saved || "light";
+    } catch {
+      return "light";
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem("theme", theme);
-
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
+    console.log("Theme changed to:", theme);
+    
+    try {
+      localStorage.setItem("theme", theme);
+    } catch (error) {
+      console.warn("Could not save theme:", error);
     }
+
+    const root = document.documentElement;
+    
+    // Remove both classes first
+    root.classList.remove("dark", "light");
+    
+    // Add the current theme
+    root.classList.add(theme);
+    
+    console.log("HTML classes:", root.classList.toString());
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    console.log("Toggle clicked! Current theme:", theme);
+    setTheme((prev) => {
+      const newTheme = prev === "dark" ? "light" : "dark";
+      console.log("New theme:", newTheme);
+      return newTheme;
+    });
   };
 
   return (
@@ -32,5 +51,9 @@ export function ThemeProvider({ children }) {
 }
 
 export function useTheme() {
-  return useContext(ThemeContext);
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useTheme must be used within ThemeProvider");
+  }
+  return context;
 }

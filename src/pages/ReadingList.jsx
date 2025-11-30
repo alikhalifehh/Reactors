@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { userBooksApi } from "../services/api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -7,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function ReadingList() {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const [entries, setEntries] = useState([]);
@@ -14,12 +16,10 @@ export default function ReadingList() {
   const [editingNotesId, setEditingNotesId] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
 
-  // Redirect user if not logged in
   useEffect(() => {
     if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
 
-  // Load reading list
   useEffect(() => {
     if (!user) return;
 
@@ -35,21 +35,17 @@ export default function ReadingList() {
     load();
   }, [user]);
 
-  // Update book entry
   async function updateEntry(id, data) {
     const res = await userBooksApi.update(id, data);
     setEntries((prev) => prev.map((e) => (e._id === id ? res.data : e)));
   }
 
-  // Remove book entry
   async function removeEntry(id) {
     if (!window.confirm("Remove this book from your list?")) return;
     await userBooksApi.delete(id);
-
     setEntries((prev) => prev.filter((e) => e._id !== id));
   }
 
-  // Notes editing
   function openNotes(entry) {
     setEditingNotesId(entry._id);
     setNotesDraft(entry.notes || "");
@@ -61,35 +57,56 @@ export default function ReadingList() {
     setNotesDraft("");
   }
 
-  // Rating
   async function setRating(entry, value) {
     await updateEntry(entry._id, { rating: value });
   }
 
-  // Filter entries
   const filtered =
     filter === "all" ? entries : entries.filter((e) => e.status === filter);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div
+      className={`
+        min-h-screen flex flex-col 
+        transition-colors duration-300 
+        ${
+          theme === "dark"
+            ? "bg-[#0f172a] text-white"
+            : "bg-gray-50 text-black"
+        }
+      `}
+    >
       <Navbar />
 
-      <div className="max-w-6xl mx-auto pt-24 px-6 pb-20">
+      <main className="flex-1 max-w-6xl mx-auto pt-24 px-6 pb-24">
         {/* HEADER + FILTERS */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">My Library</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-extrabold">My Library</h1>
 
-          <div className="bg-gray-800 rounded-lg p-1 flex gap-1">
+          <div
+            className={`
+              rounded-xl p-1 flex gap-1
+              ${
+                theme === "dark"
+                  ? "bg-[#1e293b]"
+                  : "bg-gray-200"
+              }
+            `}
+          >
             {["all", "reading", "finished", "wishlist"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={
-                  "px-3 py-1 rounded-md text-sm transition " +
-                  (filter === f
-                    ? "bg-pink-600 text-white"
-                    : "text-gray-300 hover:bg-gray-700")
-                }
+                className={`
+                  px-4 py-1 rounded-lg text-sm font-medium transition
+                  ${
+                    filter === f
+                      ? "bg-pink-600 text-white"
+                      : theme === "dark"
+                      ? "text-gray-300 hover:bg-[#334155]"
+                      : "text-gray-700 hover:bg-gray-300"
+                  }
+                `}
               >
                 {f[0].toUpperCase() + f.slice(1)}
               </button>
@@ -99,54 +116,101 @@ export default function ReadingList() {
 
         {/* EMPTY STATE */}
         {filtered.length === 0 ? (
-          <p className="text-gray-400">No books to show yet.</p>
+          <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            No books to show yet.
+          </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filtered.map((entry) => {
               const b = entry.book;
 
               return (
                 <div
                   key={entry._id}
-                  className="bg-gray-800 rounded-xl p-5 flex gap-6 shadow-lg flex-col sm:flex-row"
+                  className={`
+                    rounded-2xl p-6 shadow-xl flex gap-6 flex-col sm:flex-row
+                    transition-colors
+                    ${
+                      theme === "dark"
+                        ? "bg-[#1e293b] border border-white/10"
+                        : "bg-white border border-gray-200"
+                    }
+                  `}
                 >
                   {/* COVER */}
                   <div className="flex-shrink-0">
                     {b.coverUrl ? (
                       <img
                         src={b.coverUrl}
-                        className="h-32 w-24 rounded-md object-cover border border-gray-700"
+                        className={`
+                          h-36 w-28 rounded-lg object-cover
+                          ${
+                            theme === "dark"
+                              ? "border border-white/10"
+                              : "border border-gray-300"
+                          }
+                        `}
                         alt={b.title}
                       />
                     ) : (
-                      <div className="h-32 w-24 rounded-md bg-gray-700 flex items-center justify-center text-xs text-gray-300">
+                      <div
+                        className={`
+                          h-36 w-28 rounded-lg flex items-center justify-center text-sm
+                          ${
+                            theme === "dark"
+                              ? "bg-[#0f172a] text-gray-400"
+                              : "bg-gray-100 text-gray-500"
+                          }
+                        `}
+                      >
                         No cover
                       </div>
                     )}
                   </div>
 
-                  {/* MAIN BOOK INFO */}
+                  {/* RIGHT SIDE CONTENT */}
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold">{b.title}</h3>
-                      <p className="text-sm text-gray-400">{b.author}</p>
+                      <h3 className="text-xl font-semibold">{b.title}</h3>
+                      <p
+                        className={`
+                          text-sm
+                          ${
+                            theme === "dark"
+                              ? "text-gray-300"
+                              : "text-gray-600"
+                          }
+                        `}
+                      >
+                        {b.author}
+                      </p>
 
-                      {/* PROGRESS BAR */}
-                      <div className="mt-3">
+                      {/* PROGRESS */}
+                      <div className="mt-4">
                         <div className="flex justify-between text-xs mb-1">
-                          <span>Progress</span>
+                          <span className="font-medium text-gray-300">
+                            Progress
+                          </span>
                           <span>{entry.progress}%</span>
                         </div>
 
-                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`
+                            h-2 rounded-full overflow-hidden
+                            ${
+                              theme === "dark"
+                                ? "bg-[#0f172a]"
+                                : "bg-gray-200"
+                            }
+                          `}
+                        >
                           <div
                             className={
-                              "h-full " +
-                              (entry.progress === 100
-                                ? "bg-green-500"
+                              entry.progress === 100
+                                ? "bg-green-500 h-full"
                                 : entry.progress > 0
-                                ? "bg-blue-500"
-                                : "bg-gray-500")
+                                ? "bg-blue-500 h-full"
+                                : "bg-gray-500 h-full"
                             }
                             style={{ width: `${entry.progress}%` }}
                           />
@@ -155,49 +219,72 @@ export default function ReadingList() {
 
                       {/* STATUS + RATING */}
                       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-                        <span className="text-xs text-gray-400">
+                        <span
+                          className={`text-xs ${
+                            theme === "dark"
+                              ? "text-gray-300"
+                              : "text-gray-700"
+                          }`}
+                        >
                           Status: {entry.status}
                         </span>
 
-                        {/* STARS */}
+                        {/* Rating stars */}
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map((v) => (
                             <button
                               key={v}
                               onClick={() => setRating(entry, v)}
-                              className={
-                                "text-lg leading-none " +
-                                (entry.rating && entry.rating >= v
-                                  ? "text-yellow-400"
-                                  : "text-gray-500")
-                              }
+                              className={`
+                                text-xl leading-none 
+                                ${
+                                  entry.rating && entry.rating >= v
+                                    ? "text-yellow-400"
+                                    : theme === "dark"
+                                    ? "text-gray-600"
+                                    : "text-gray-300"
+                                }
+                              `}
                             >
                               ★
                             </button>
                           ))}
                         </div>
 
-                        {entry.rating ? (
-                          <span className="text-xs text-gray-300">
-                            {entry.rating} / 5
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-500">
-                            No rating yet
-                          </span>
-                        )}
+                        <span
+                          className={`text-xs ${
+                            theme === "dark"
+                              ? "text-gray-300"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {entry.rating ? `${entry.rating} / 5` : "No rating yet"}
+                        </span>
                       </div>
 
                       {/* NOTES */}
-                      <div className="mt-3 text-xs text-gray-300">
+                      <div
+                        className={`
+                          mt-4 text-sm
+                          ${theme === "dark" ? "text-gray-300" : "text-gray-700"}
+                        `}
+                      >
                         {editingNotesId === entry._id ? (
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <textarea
                               value={notesDraft}
-                              onChange={(e) => setNotesDraft(e.target.value)}
+                              onChange={(e) =>
+                                setNotesDraft(e.target.value)
+                              }
                               rows={3}
-                              className="w-full rounded-md bg-gray-900 border border-gray-700 px-3 py-2 text-xs"
-                              placeholder="Write your thoughts about this book"
+                              className={`
+                                w-full rounded-md border px-3 py-2 text-sm
+                                ${
+                                  theme === "dark"
+                                    ? "bg-[#0f172a] border-[#1e293b]"
+                                    : "bg-white border-gray-300"
+                                }
+                              `}
                             />
 
                             <div className="flex gap-2 justify-end">
@@ -206,30 +293,42 @@ export default function ReadingList() {
                                   setEditingNotesId(null);
                                   setNotesDraft("");
                                 }}
-                                className="px-3 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs"
+                                className={`
+                                  px-4 py-1 rounded-md text-xs
+                                  ${
+                                    theme === "dark"
+                                      ? "bg-[#0f172a] hover:bg-[#1e293b]"
+                                      : "bg-gray-200 hover:bg-gray-300"
+                                  }
+                                `}
                               >
                                 Cancel
                               </button>
 
                               <button
                                 onClick={() => saveNotes(entry)}
-                                className="px-3 py-1 rounded-md bg-pink-600 hover:bg-pink-500 text-xs font-semibold"
+                                className="px-4 py-1 rounded-md bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold"
                               >
-                                Save notes
+                                Save
                               </button>
                             </div>
                           </div>
                         ) : (
                           <div className="flex justify-between items-center">
                             <p className="max-w-md">
-                              {entry.notes
-                                ? entry.notes
-                                : "No notes yet. Add your thoughts."}
+                              {entry.notes || "No notes yet. Add your thoughts."}
                             </p>
 
                             <button
                               onClick={() => openNotes(entry)}
-                              className="ml-4 px-3 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs whitespace-nowrap"
+                              className={`
+                                ml-4 px-4 py-1 rounded-md text-xs
+                                ${
+                                  theme === "dark"
+                                    ? "bg-[#0f172a] hover:bg-[#1e293b]"
+                                    : "bg-gray-200 hover:bg-gray-300"
+                                }
+                              `}
                             >
                               Edit notes
                             </button>
@@ -239,8 +338,7 @@ export default function ReadingList() {
                     </div>
 
                     {/* ACTION BUTTONS */}
-                    <div className="flex gap-2 mt-4 flex-wrap">
-                      {/* READING ACTIONS */}
+                    <div className="flex gap-3 mt-6 flex-wrap">
                       {entry.status === "reading" && (
                         <>
                           <button
@@ -249,7 +347,7 @@ export default function ReadingList() {
                                 progress: Math.min(100, entry.progress + 5),
                               })
                             }
-                            className="px-3 py-1 bg-blue-500 rounded-md text-sm text-black font-semibold"
+                            className="px-4 py-1 bg-blue-500 hover:bg-blue-600 rounded-md text-sm text-white font-semibold"
                           >
                             +5%
                           </button>
@@ -260,7 +358,7 @@ export default function ReadingList() {
                                 progress: Math.max(0, entry.progress - 5),
                               })
                             }
-                            className="px-3 py-1 bg-blue-500 rounded-md text-sm text-black font-semibold"
+                            className="px-4 py-1 bg-blue-500 hover:bg-blue-600 rounded-md text-sm text-white font-semibold"
                           >
                             -5%
                           </button>
@@ -272,14 +370,13 @@ export default function ReadingList() {
                                 status: "finished",
                               })
                             }
-                            className="px-3 py-1 bg-green-600 rounded-md text-sm font-semibold"
+                            className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm text-white font-semibold"
                           >
                             Mark Done
                           </button>
                         </>
                       )}
 
-                      {/* WISHLIST ACTIONS */}
                       {entry.status === "wishlist" && (
                         <button
                           onClick={() =>
@@ -288,16 +385,22 @@ export default function ReadingList() {
                               progress: 1,
                             })
                           }
-                          className="px-3 py-1 bg-gray-700 rounded-md text-sm font-semibold"
+                          className={`
+                            px-4 py-1 rounded-md text-sm font-semibold
+                            ${
+                              theme === "dark"
+                                ? "bg-[#475569] hover:bg-[#334155]"
+                                : "bg-gray-800 hover:bg-gray-900 text-white"
+                            }
+                          `}
                         >
                           Start Reading
                         </button>
                       )}
 
-                      {/* REMOVE */}
                       <button
                         onClick={() => removeEntry(entry._id)}
-                        className="px-3 py-1 bg-red-500 rounded-md text-sm text-black font-semibold"
+                        className="px-4 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm text-white font-semibold"
                       >
                         Remove
                       </button>
@@ -308,7 +411,7 @@ export default function ReadingList() {
             })}
           </div>
         )}
-      </div>
+      </main>
 
       <Footer />
     </div>

@@ -14,7 +14,6 @@ export default function Navbar() {
   const dropdownRef = useRef(null);
   const { theme, toggleTheme } = useTheme();
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -26,29 +25,24 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // ✅ Option A — Always redirect to HOME after logout
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/"; // 🚀 overrides ProtectedRoute & always goes home
+    window.location.href = "/";
   };
 
   return (
-    <nav className="w-full bg-white/80 backdrop-blur-md shadow-md fixed top-0 left-0 z-50">
+    <nav className="w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-md fixed top-0 left-0 z-50 transition-all">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* LOGO */}
         <Link
           to="/"
-          className="text-3xl font-bold"
-          style={{ color: "#631730ff" }}
+          className="text-3xl font-bold text-[#631730ff]"
         >
           Reactors 📚
         </Link>
 
         {/* DESKTOP MENU */}
-        <div
-          className="hidden md:flex items-center gap-6 text-lg font-medium"
-          style={{ color: "#631730ff" }}
-        >
+        <div className="hidden md:flex items-center gap-6 text-lg font-medium text-[#631730ff] dark:text-white">
           <Link to="/books" className="hover:underline">
             Books
           </Link>
@@ -65,23 +59,17 @@ export default function Navbar() {
           {/* THEME TOGGLE */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-95"
+            className="p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-300"
             aria-label="Toggle Theme"
           >
             {theme === "dark" ? (
-              <Sun
-                size={20}
-                className="text-yellow-300 transition-transform duration-300"
-              />
+              <Sun size={20} className="text-yellow-300" />
             ) : (
-              <Moon
-                size={20}
-                className="text-gray-800 transition-transform duration-300"
-              />
+              <Moon size={20} className="text-gray-800" />
             )}
           </button>
 
-          {/* AUTH SECTION */}
+          {/* AUTH */}
           {!user ? (
             <div className="flex items-center gap-3">
               <Link
@@ -105,19 +93,17 @@ export default function Navbar() {
               >
                 <span>{user.name}</span>
                 <span
-                  className={`transition-transform duration-300 ${
-                    dropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`}
                 >
                   ▼
                 </span>
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg text-gray-700 border">
+                <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border dark:border-zinc-700">
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-zinc-700"
                   >
                     Logout
                   </button>
@@ -129,7 +115,7 @@ export default function Navbar() {
 
         {/* MOBILE BURGER */}
         <button
-          className="md:hidden text-[#631730ff]"
+          className="md:hidden text-[#631730ff] dark:text-white"
           onClick={() => setMobileOpen((prev) => !prev)}
         >
           {mobileOpen ? <X size={30} /> : <Menu size={30} />}
@@ -138,12 +124,12 @@ export default function Navbar() {
 
       {/* MOBILE MENU */}
       {mobileOpen && (
-        <div className="md:hidden bg-white pb-4 shadow-lg border-t text-[#631730ff]">
+        <div className="md:hidden bg-white dark:bg-zinc-900 pb-4 shadow-lg border-t dark:border-zinc-700 text-[#631730ff] dark:text-white transition">
           <div className="px-6 py-4 flex flex-col gap-4 text-lg font-medium">
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="self-start p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-95"
+              className="self-start p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition"
             >
               {theme === "dark" ? (
                 <Sun size={22} className="text-yellow-300" />
@@ -152,7 +138,6 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* LINKS */}
             <Link to="/books" onClick={() => setMobileOpen(false)}>
               Books
             </Link>
@@ -166,7 +151,6 @@ export default function Navbar() {
               Add & Edit
             </Link>
 
-            {/* AUTH */}
             {!user ? (
               <>
                 <Link

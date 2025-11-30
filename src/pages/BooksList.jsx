@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { booksApi, userBooksApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 
 import { fetchGoogleCover } from "../utils/fetchCover";
@@ -11,6 +12,7 @@ import { getCachedCover, cacheCover } from "../utils/coverCache";
 export default function BooksList() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
 
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState("");
@@ -31,10 +33,8 @@ export default function BooksList() {
         setGenres(uniqueGenres);
 
         rawBooks.forEach(async (b) => {
-          // Skip if book already has a cover
           if (b.coverImage) return;
 
-          // Check cache
           const cached = getCachedCover(b.title);
           if (cached) {
             setBooks((prev) =>
@@ -45,13 +45,11 @@ export default function BooksList() {
             return;
           }
 
-          // Fetch from Google
           const autoCover = await fetchGoogleCover(b.title);
 
           if (autoCover) {
             cacheCover(b.title, autoCover);
 
-            // live state update
             setBooks((prev) =>
               prev.map((x) =>
                 x._id === b._id ? { ...x, coverImage: autoCover } : x
@@ -94,7 +92,9 @@ export default function BooksList() {
   });
 
   return (
-    <div className="min-h-screen bg-white text-black dark:bg-[#020617] dark:text-white">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      theme === "dark" ? "bg-zinc-950 text-white" : "bg-gray-50 text-black"
+    }`}>
       <Navbar />
 
       <div className="max-w-7xl mx-auto pt-24 px-6 pb-20">
@@ -105,19 +105,28 @@ export default function BooksList() {
           {/* SEARCH BAR */}
           <input
             placeholder="Search by title"
-            className="w-full sm:w-80 p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
+            className={`w-full sm:w-80 p-2 rounded-md border transition-colors ${
+              theme === "dark"
+                ? "bg-zinc-900 border-zinc-700 text-white placeholder-gray-400"
+                : "bg-white border-gray-300 text-black placeholder-gray-500"
+            }`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
           {/* GENRE FILTERS */}
-          <div className="bg-gray-800 p-1 rounded-lg flex gap-1 flex-wrap">
+          <div className={`p-1 rounded-lg flex gap-1 flex-wrap ${
+            theme === "dark" ? "bg-zinc-900" : "bg-gray-200"
+          }`}>
             <button
               onClick={() => setActiveGenre("all")}
-              className={
-                "px-3 py-1 rounded-md text-sm " +
-                (activeGenre === "all" ? "bg-pink-600" : "hover:bg-gray-700")
-              }
+              className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                activeGenre === "all"
+                  ? "bg-pink-600 text-white"
+                  : theme === "dark"
+                  ? "hover:bg-zinc-700 text-gray-300"
+                  : "hover:bg-gray-300 text-gray-700"
+              }`}
             >
               All
             </button>
@@ -126,10 +135,13 @@ export default function BooksList() {
               <button
                 key={g}
                 onClick={() => setActiveGenre(g)}
-                className={
-                  "px-3 py-1 rounded-md text-sm " +
-                  (activeGenre === g ? "bg-pink-600" : "hover:bg-gray-700")
-                }
+                className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                  activeGenre === g
+                    ? "bg-pink-600 text-white"
+                    : theme === "dark"
+                    ? "hover:bg-zinc-700 text-gray-300"
+                    : "hover:bg-gray-300 text-gray-700"
+                }`}
               >
                 {g}
               </button>
@@ -139,36 +151,54 @@ export default function BooksList() {
 
         {/* BOOK GRID */}
         {filteredBooks.length === 0 ? (
-          <p className="text-gray-400 mt-10">No books found.</p>
+          <p className={`mt-10 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            No books found.
+          </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredBooks.map((b) => (
               <div
                 key={b._id}
                 onClick={() => navigate(`/books/${b._id}`)}
-                className="bg-gray-800 rounded-xl shadow-lg p-5 flex flex-col hover:bg-gray-700 transition cursor-pointer"
+                className={`rounded-xl shadow-lg p-5 flex flex-col transition cursor-pointer ${
+                  theme === "dark"
+                    ? "bg-zinc-900 hover:bg-zinc-800 border border-zinc-800"
+                    : "bg-white hover:bg-gray-50 border border-gray-200"
+                }`}
               >
                 {/* COVER */}
                 {b.coverImage ? (
                   <img
                     src={b.coverImage}
                     alt={b.title}
-                    className="h-48 w-full object-cover rounded-lg border border-gray-700"
+                    className={`h-48 w-full object-cover rounded-lg ${
+                      theme === "dark" ? "border border-zinc-700" : "border border-gray-300"
+                    }`}
                   />
                 ) : (
                   <img
-                    src="https://via.placeholder.com/300x450/1e293b/ffffff?text=No+Cover"
+                    src={
+                      theme === "dark"
+                        ? "https://via.placeholder.com/300x450/18181b/ffffff?text=No+Cover"
+                        : "https://via.placeholder.com/300x450/f3f4f6/000000?text=No+Cover"
+                    }
                     alt="No cover"
-                    className="h-48 w-full object-cover rounded-lg border border-gray-700"
+                    className={`h-48 w-full object-cover rounded-lg ${
+                      theme === "dark" ? "border border-zinc-700" : "border border-gray-300"
+                    }`}
                   />
                 )}
 
                 {/* TITLE + AUTHOR */}
                 <h3 className="text-lg font-semibold mt-4">{b.title}</h3>
-                <p className="text-sm text-gray-400">{b.author}</p>
+                <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  {b.author}
+                </p>
 
                 {/* DESCRIPTION */}
-                <p className="mt-3 text-xs text-gray-400 line-clamp-3">
+                <p className={`mt-3 text-xs line-clamp-3 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                }`}>
                   {b.description || "No description provided"}
                 </p>
 
@@ -178,7 +208,7 @@ export default function BooksList() {
                     e.stopPropagation();
                     addToList(b._id);
                   }}
-                  className="mt-auto px-4 py-2 bg-pink-600 rounded-md text-sm font-semibold hover:bg-pink-500"
+                  className="mt-auto px-4 py-2 bg-pink-600 rounded-md text-sm font-semibold hover:bg-pink-500 text-white transition-colors"
                 >
                   Add to My List
                 </button>

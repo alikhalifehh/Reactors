@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { booksApi } from "../services/api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+
 export default function AddEditBook() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const editing = Boolean(id);
+
   const [form, setForm] = useState({
     title: "",
     author: "",
@@ -16,9 +20,11 @@ export default function AddEditBook() {
     genre: "",
     coverImage: "",
   });
+
   useEffect(() => {
     if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
+
   useEffect(() => {
     if (!editing) return;
     async function load() {
@@ -38,10 +44,12 @@ export default function AddEditBook() {
     }
     load();
   }, [editing, id]);
+
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
+
   async function handleSubmit(e) {
     e.preventDefault();
     try {
@@ -55,126 +63,121 @@ export default function AddEditBook() {
       alert("Could not save book");
     }
   }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#020617] text-white">
-        {" "}
-        <Navbar />{" "}
-        <main className="flex-1 pt-28 px-6 text-center text-gray-300">
-          {" "}
-          Loading...{" "}
-        </main>{" "}
-        <Footer />{" "}
+      <div className={`min-h-screen flex flex-col ${theme === "dark" ? "bg-zinc-950 text-white" : "bg-white text-black"}`}>
+        <Navbar />
+        <main className="flex-1 pt-28 px-6 text-center">
+          Loading...
+        </main>
+        <Footer />
       </div>
     );
   }
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#020617] text-white">
-      {" "}
-      <Navbar />{" "}
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme === "dark" ? "bg-zinc-950 text-white" : "bg-gray-50 text-black"}`}>
+      <Navbar />
       <main className="flex-1 max-w-3xl mx-auto pt-24 pb-16 px-4 sm:px-6">
-        {" "}
         <button
           onClick={() => navigate("/books")}
-          className="text-xs text-gray-400 hover:text-gray-200 mb-4"
+          className={`text-xs mb-4 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
         >
-          {" "}
-          ← Back to Books{" "}
-        </button>{" "}
-        <section className="bg-slate-900 border border-white/5 rounded-3xl shadow-xl p-6 sm:p-8">
-          {" "}
+          ← Back to Books
+        </button>
+
+        <section className={`rounded-3xl shadow-xl p-6 sm:p-8 transition-colors ${theme === "dark" ? "bg-zinc-900 border border-zinc-800" : "bg-white border border-gray-200"}`}>
           <h1 className="text-2xl sm:text-3xl font-bold mb-6">
-            {" "}
-            {editing ? "Edit Book" : "Add New Book"}{" "}
-          </h1>{" "}
+            {editing ? "Edit Book" : "Add New Book"}
+          </h1>
+
           <form className="space-y-5" onSubmit={handleSubmit}>
-            {" "}
             <div className="space-y-1">
-              {" "}
-              <label className="text-sm text-gray-200">Title</label>{" "}
+              <label className={`text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>Title</label>
               <input
                 name="title"
                 value={form.title}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                  theme === "dark" 
+                    ? "bg-zinc-800 border border-zinc-700 text-white" 
+                    : "bg-gray-50 border border-gray-300 text-black"
+                }`}
                 placeholder="Book title"
-              />{" "}
-            </div>{" "}
+              />
+            </div>
+
             <div className="space-y-1">
-              {" "}
-              <label className="text-sm text-gray-200">Author</label>{" "}
+              <label className={`text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>Author</label>
               <input
                 name="author"
                 value={form.author}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                  theme === "dark" 
+                    ? "bg-zinc-800 border border-zinc-700 text-white" 
+                    : "bg-gray-50 border border-gray-300 text-black"
+                }`}
                 placeholder="Author name"
-              />{" "}
-            </div>{" "}
+              />
+            </div>
+
             <div className="space-y-1">
-              {" "}
-              <label className="text-sm text-gray-200">Genre</label>{" "}
+              <label className={`text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>Genre</label>
               <input
                 name="genre"
                 value={form.genre}
                 onChange={handleChange}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                  theme === "dark" 
+                    ? "bg-zinc-800 border border-zinc-700 text-white" 
+                    : "bg-gray-50 border border-gray-300 text-black"
+                }`}
                 placeholder="Fantasy, Thriller, Sci-Fi..."
-              />{" "}
-            </div>{" "}
+              />
+            </div>
+
             <div className="space-y-1">
-              {" "}
-              <label className="text-sm text-gray-200">
-                Cover Image URL
-              </label>{" "}
-              <input
-                name="coverImage"
-                value={form.coverImage}
-                onChange={handleChange}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="https://example.com/cover.jpg"
-              />{" "}
-              <p className="text-[11px] text-gray-400">
-                {" "}
-                Paste a direct image link. This will appear on the book cards
-                and detail page.{" "}
-              </p>{" "}
-            </div>{" "}
-            <div className="space-y-1">
-              {" "}
-              <label className="text-sm text-gray-200">Description</label>{" "}
+              <label className={`text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>Description</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm h-32 resize-none focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className={`w-full rounded-lg px-3 py-2 text-sm h-32 resize-none focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors ${
+                  theme === "dark" 
+                    ? "bg-zinc-800 border border-zinc-700 text-white" 
+                    : "bg-gray-50 border border-gray-300 text-black"
+                }`}
                 placeholder="Brief summary of the book"
-              />{" "}
-            </div>{" "}
+              />
+            </div>
+
             <div className="flex justify-end gap-3 pt-2">
-              {" "}
               <button
                 type="button"
                 onClick={() => navigate("/books")}
-                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm"
+                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                  theme === "dark"
+                    ? "bg-zinc-800 hover:bg-zinc-700"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
               >
-                {" "}
-                Cancel{" "}
-              </button>{" "}
+                Cancel
+              </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-sm font-semibold"
+                className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-sm font-semibold transition-colors"
               >
-                {" "}
-                {editing ? "Save Changes" : "Add Book"}{" "}
-              </button>{" "}
-            </div>{" "}
-          </form>{" "}
-        </section>{" "}
-      </main>{" "}
-      <Footer />{" "}
+                {editing ? "Save Changes" : "Add Book"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+      <Footer />
     </div>
   );
 }

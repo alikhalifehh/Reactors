@@ -10,50 +10,56 @@ import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import OtpModal from "./components/OtpModal";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        {/* Modal MUST be inside AuthProvider and BrowserRouter */}
-        <OtpModal />
+      <ThemeProvider>
+        <AuthProvider>
+          <OtpModal />
 
-        <Routes>
-          {/* PUBLIC ROUTES */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/books" element={<BooksList />} />
-          <Route path="/books/:id" element={<BookDetail />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <div className="min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-300">
+            <Routes>
+              {/* PUBLIC ROUTES */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/books" element={<BooksList />} />
+              <Route path="/books/:id" element={<BookDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          {/* PROTECTED ROUTES */}
-          <Route
-            path="/add"
-            element={
-              <ProtectedRoute>
-                <AddEditBook />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reading-list"
-            element={
-              <ProtectedRoute>
-                <ReadingList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
+              {/* PROTECTED ROUTES */}
+              <Route
+                path="/add"
+                element={
+                  <ProtectedRoute>
+                    <AddEditBook />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/reading-list"
+                element={
+                  <ProtectedRoute>
+                    <ReadingList />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
