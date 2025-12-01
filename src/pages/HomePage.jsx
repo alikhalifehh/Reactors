@@ -11,7 +11,8 @@ const bg3 = new URL("../assets/book3.jpg", import.meta.url).href;
 const bg4 = new URL("../assets/book4.jpg", import.meta.url).href;
 const bg5 = new URL("../assets/book5.jpg", import.meta.url).href;
 
-const atomicHabits = new URL("../assets/atomic-habits.jpg", import.meta.url).href;
+const atomicHabits = new URL("../assets/atomic-habits.jpg", import.meta.url)
+  .href;
 const deepWork = new URL("../assets/deep-work.jpg", import.meta.url).href;
 const alchemist = new URL("../assets/the-alchemist.jpg", import.meta.url).href;
 
@@ -67,7 +68,7 @@ export default function HomePage() {
 
         {/* HERO SECTION */}
         <main className="flex-grow flex flex-col items-center justify-center text-center px-6 min-h-[calc(100vh-200px)]">
-          <h1 className="text-6xl font-extrabold text-white mb-6 drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]">
+          <h1 className="mt-20 text-6xl font-extrabold text-white mb-6 drop-shadow-[0_3px_8px_rgba(0,0,0,0.8)]">
             Welcome to Reactors
           </h1>
 
@@ -111,24 +112,30 @@ export default function HomePage() {
               </button>
 
               {/* BOOK CARD */}
-              <div className={`rounded-xl shadow-lg p-4 w-60 text-center transition-all duration-500 ${
-                theme === "dark" ? "bg-zinc-800/90" : "bg-white/90"
-              }`}>
+              <div
+                className={`rounded-xl shadow-lg p-4 w-60 text-center transition-all duration-500 ${
+                  theme === "dark" ? "bg-zinc-800/90" : "bg-white/90"
+                }`}
+              >
                 <img
                   src={featuredBooks[currentBook].image}
                   alt={featuredBooks[currentBook].title}
                   className="rounded-lg mb-3 w-full h-40 object-cover"
                 />
 
-                <h3 className={`text-base font-semibold ${
-                  theme === "dark" ? "text-white" : "text-gray-900"
-                }`}>
+                <h3
+                  className={`text-base font-semibold ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
                   {featuredBooks[currentBook].title}
                 </h3>
 
-                <p className={`text-xs mt-1 ${
-                  theme === "dark" ? "text-gray-300" : "text-gray-600"
-                }`}>
+                <p
+                  className={`text-xs mt-1 ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
                   {featuredBooks[currentBook].desc}
                 </p>
               </div>
