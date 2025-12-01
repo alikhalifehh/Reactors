@@ -9,12 +9,10 @@ import { useTheme } from "../context/ThemeContext";
 export default function UserProfile() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { theme } = useTheme(); // 🌙 DARK MODE ADDED HERE
+  const { theme } = useTheme();
 
-  // Consistent user ID
   const userId = user?.id || user?._id;
 
-  // Book summary
   const [summary, setSummary] = useState({
     reading: 0,
     finished: 0,
@@ -24,7 +22,6 @@ export default function UserProfile() {
   const [activity, setActivity] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  // Local profile extras
   const [profileExtras, setProfileExtras] = useState({
     bio: "",
     location: "",
@@ -40,12 +37,10 @@ export default function UserProfile() {
     yearlyGoal: 0,
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
 
-  // Load stored profile settings
   useEffect(() => {
     if (!userId) return;
 
@@ -64,7 +59,6 @@ export default function UserProfile() {
     }
   }, [userId]);
 
-  // Load stats and recent activity
   useEffect(() => {
     if (!user) return;
 
@@ -77,7 +71,6 @@ export default function UserProfile() {
           userBooksApi.getList(),
         ]);
 
-        // Summary
         if (summaryRes.status === "fulfilled") {
           const s = summaryRes.value.data.summary;
           setSummary({
@@ -87,7 +80,6 @@ export default function UserProfile() {
           });
         }
 
-        // Activity
         if (listRes.status === "fulfilled") {
           const entries = listRes.value.data || [];
           setActivity(entries.slice(0, 6));
@@ -100,16 +92,15 @@ export default function UserProfile() {
     loadStats();
   }, [user]);
 
-  // Loading screen
   if (loading) {
     return (
       <div
-        className={`min-h-screen transition-colors duration-300 ${
+        className={`min-h-screen flex flex-col transition-colors duration-300 ${
           theme === "dark" ? "bg-[#020617] text-white" : "bg-gray-50 text-black"
         }`}
       >
         <Navbar />
-        <main className="pt-32 pb-10 text-center">Loading profile...</main>
+        <main className="flex-1 pt-32 pb-10 text-center">Loading profile...</main>
         <Footer />
       </div>
     );
@@ -117,7 +108,6 @@ export default function UserProfile() {
 
   if (!user) return null;
 
-  // User initials
   const initials =
     user?.name
       ?.split(" ")
@@ -134,7 +124,6 @@ export default function UserProfile() {
         )
       : 0;
 
-  // Edit functions
   function openEdit() {
     setEditForm(profileExtras);
     setEditing(true);
@@ -163,33 +152,32 @@ export default function UserProfile() {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${
+      className={`min-h-screen flex flex-col transition-colors duration-300 ${
         theme === "dark"
-          ? "bg-[#020617] text-white"
-          : "bg-white text-black"
+          ? "bg-[#140404] text-white"
+          : "bg-[#FFFCE0] text-black"
       }`}
     >
       <Navbar />
 
-      <main className="max-w-5xl mx-auto pt-24 pb-20 px-4 sm:px-6 space-y-8">
+      <main className="flex-1 max-w-5xl mx-auto pt-24 pb-20 px-4 sm:px-6 space-y-8">
         {/* PROFILE CARD */}
         <section
-          className={`relative rounded-3xl overflow-hidden shadow-xl border transition-colors duration-300 ${
+          className={`w-[1000px] relative rounded-3xl overflow-hidden shadow-xl border transition-colors ${
             theme === "dark"
-              ? "bg-[#020617] border-white/5"
-              : "bg-white border-gray-200"
+              ? "bg-zinc-700 text-white"
+              : "bg-[#BAAE93] text-black"
           }`}
         >
-          <div className="h-32 bg-gradient-to-r from-pink-700 via-rose-500 to-amber-400" />
+          <div className="h-32 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-500" />
 
           <div className="px-6 sm:px-8 pb-8 -mt-12">
             <div className="flex flex-col sm:flex-row sm:items-end gap-6">
-              {/* Avatar */}
               <div className="flex items-center gap-4">
                 <div
                   className={`h-24 w-24 rounded-full border-4 shadow-lg flex items-center justify-center overflow-hidden ${
                     theme === "dark"
-                      ? "bg-slate-900 border-[#020617]"
+                      ? "bg-zinc-900 border-[#020617]"
                       : "bg-gray-100 border-white"
                   }`}
                 >
@@ -204,11 +192,10 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                {/* Name + Email */}
                 <div>
                   <h1 className="text-3xl font-bold">{user.name}</h1>
                   <p
-                    className={`text-sm ${
+                    className={`mt-3 text-sm ${
                       theme === "dark" ? "text-gray-300" : "text-gray-600"
                     }`}
                   >
@@ -259,7 +246,6 @@ export default function UserProfile() {
               </div>
             </div>
 
-            {/* BIO */}
             <p
               className={`mt-6 text-sm ${
                 theme === "dark" ? "text-gray-300" : "text-gray-700"
@@ -268,16 +254,13 @@ export default function UserProfile() {
               {profileExtras.bio || "No bio yet. Click Edit Profile to add one."}
             </p>
 
-            {/* LOCATION + FAVORITE GENRE */}
             {(profileExtras.location || profileExtras.favoriteGenre) && (
               <p
                 className={`mt-1 text-xs ${
                   theme === "dark" ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                {profileExtras.location && (
-                  <span>{profileExtras.location}</span>
-                )}
+                {profileExtras.location && <span>{profileExtras.location}</span>}
                 {profileExtras.location && profileExtras.favoriteGenre && (
                   <span className="mx-2">•</span>
                 )}
@@ -287,7 +270,6 @@ export default function UserProfile() {
               </p>
             )}
 
-            {/* BOOK STATS */}
             <div className="mt-8 grid grid-cols-3 gap-3 text-center">
               <div
                 className={`rounded-2xl py-3 ${
@@ -345,12 +327,12 @@ export default function UserProfile() {
           </div>
         </section>
 
-        {/* ACTIVITY SECTION */}
+        {/* ACTIVITY */}
         <section
-          className={`rounded-3xl p-6 shadow-lg border transition-colors duration-300 ${
+          className={`w-[1000px] rounded-3xl p-6 shadow-lg border transition-colors ${
             theme === "dark"
-              ? "bg-[#020617] border-white/5"
-              : "bg-white border-gray-200"
+              ? "bg-zinc-700 border-white/5"
+              : "bg-[#BAAE93] text-black"
           }`}
         >
           <div className="flex items-center justify-between mb-4">
@@ -389,9 +371,7 @@ export default function UserProfile() {
                 <li
                   key={entry._id}
                   className={`flex justify-between pb-3 border-b last:border-none ${
-                    theme === "dark"
-                      ? "border-white/5"
-                      : "border-gray-200"
+                    theme === "dark" ? "border-white/5" : "border-gray-200"
                   }`}
                 >
                   <div>
@@ -401,7 +381,9 @@ export default function UserProfile() {
 
                     <p
                       className={`text-xs ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        theme === "dark"
+                          ? "text-gray-400"
+                          : "text-gray-600"
                       }`}
                     >
                       {entry.status}{" "}
@@ -430,7 +412,7 @@ export default function UserProfile() {
       {editing && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
           <div
-            className={`p-6 rounded-2xl shadow-xl max-w-md w-full border transition-colors duration-300 ${
+            className={`p-6 rounded-2xl shadow-xl max-w-md w-full border transition-colors ${
               theme === "dark"
                 ? "bg-[#020617] border-white/10"
                 : "bg-white border-gray-200"
@@ -445,7 +427,7 @@ export default function UserProfile() {
                   name="bio"
                   value={editForm.bio}
                   onChange={handleEditChange}
-                  className={`w-full rounded-lg px-3 py-2 border transition-colors ${
+                  className={`w-full rounded-lg px-3 py-2 border ${
                     theme === "dark"
                       ? "bg-slate-900 border-slate-700"
                       : "bg-white border-gray-300"
@@ -460,7 +442,7 @@ export default function UserProfile() {
                   name="location"
                   value={editForm.location}
                   onChange={handleEditChange}
-                  className={`w-full rounded-lg px-3 py-2 border transition-colors ${
+                  className={`w-full rounded-lg px-3 py-2 border ${
                     theme === "dark"
                       ? "bg-slate-900 border-slate-700"
                       : "bg-white border-gray-300"
@@ -474,7 +456,7 @@ export default function UserProfile() {
                   name="favoriteGenre"
                   value={editForm.favoriteGenre}
                   onChange={handleEditChange}
-                  className={`w-full rounded-lg px-3 py-2 border transition-colors ${
+                  className={`w-full rounded-lg px-3 py-2 border ${
                     theme === "dark"
                       ? "bg-slate-900 border-slate-700"
                       : "bg-white border-gray-300"
@@ -490,7 +472,7 @@ export default function UserProfile() {
                   name="yearlyGoal"
                   value={editForm.yearlyGoal}
                   onChange={handleEditChange}
-                  className={`w-full rounded-lg px-3 py-2 border transition-colors ${
+                  className={`w-full rounded-lg px-3 py-2 border ${
                     theme === "dark"
                       ? "bg-slate-900 border-slate-700"
                       : "bg-white border-gray-300"

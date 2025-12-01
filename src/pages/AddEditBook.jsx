@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { booksApi } from "../services/api";
+
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -66,7 +67,7 @@ export default function AddEditBook() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex flex-col ${theme === "dark" ? "bg-zinc-950 text-white" : "bg-white text-black"}`}>
+      <div className={`min-h-screen flex flex-col ${theme === "dark" ? "bg-[#140404] text-white" : "bg-[#FFFCE0] text-black"}`}>
         <Navbar />
         <main className="flex-1 pt-28 px-6 text-center">
           Loading...
@@ -77,9 +78,9 @@ export default function AddEditBook() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme === "dark" ? "bg-zinc-950 text-white" : "bg-gray-50 text-black"}`}>
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme === "dark" ? "bg-[#140404] text-white" : "bg-[#FFFCE0] text-black"}`}>
       <Navbar />
-      <main className="flex-1 max-w-3xl mx-auto pt-24 pb-16 px-4 sm:px-6">
+<main className="flex-1 max-w-6xl mx-auto pt-24 pb-16 px-4 sm:px-8">
         <button
           onClick={() => navigate("/books")}
           className={`text-xs mb-4 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
@@ -87,7 +88,7 @@ export default function AddEditBook() {
           ← Back to Books
         </button>
 
-        <section className={`rounded-3xl shadow-xl p-6 sm:p-8 transition-colors ${theme === "dark" ? "bg-zinc-900 border border-zinc-800" : "bg-white border border-gray-200"}`}>
+        <section className={`w-[1200px] mx-auto rounded-4xl shadow-xl p-10 sm:p-12 transition-colors ${theme === "dark" ? "bg-zinc-700 border border-zinc-800" : "bg-[#BAAE93] border border-gray-200"}`}>
           <h1 className="text-2xl sm:text-3xl font-bold mb-6">
             {editing ? "Edit Book" : "Add New Book"}
           </h1>

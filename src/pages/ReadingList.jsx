@@ -71,8 +71,8 @@ export default function ReadingList() {
         transition-colors duration-300 
         ${
           theme === "dark"
-            ? "bg-[#0f172a] text-white"
-            : "bg-gray-50 text-black"
+            ? "bg-[#140404] text-white"
+            : "bg-[#FFFCE0] text-black"
         }
       `}
     >
@@ -86,11 +86,7 @@ export default function ReadingList() {
           <div
             className={`
               rounded-xl p-1 flex gap-1
-              ${
-                theme === "dark"
-                  ? "bg-[#1e293b]"
-                  : "bg-gray-200"
-              }
+              ${theme === "dark" ? "bg-[#1e293b]" : "bg-gray-200"}
             `}
           >
             {["all", "reading", "finished", "wishlist"].map((f) => (
@@ -127,21 +123,21 @@ export default function ReadingList() {
               return (
                 <div
                   key={entry._id}
-                  className={`
+                  className={`w-[1200px]
                     rounded-2xl p-6 shadow-xl flex gap-6 flex-col sm:flex-row
                     transition-colors
                     ${
                       theme === "dark"
-                        ? "bg-[#1e293b] border border-white/10"
-                        : "bg-white border border-gray-200"
+                        ? "bg-zinc-700 border border-white/10"
+                        : "bg-[#BAAE93] border border-gray-200"
                     }
                   `}
                 >
                   {/* COVER */}
                   <div className="flex-shrink-0">
-                    {b.coverUrl ? (
+                    {(entry.coverImage || b.coverImage) ? (
                       <img
-                        src={b.coverUrl}
+                        src={entry.coverImage || b.coverImage}
                         className={`
                           h-36 w-28 rounded-lg object-cover
                           ${
@@ -175,11 +171,7 @@ export default function ReadingList() {
                       <p
                         className={`
                           text-sm
-                          ${
-                            theme === "dark"
-                              ? "text-gray-300"
-                              : "text-gray-600"
-                          }
+                          ${theme === "dark" ? "text-gray-300" : "text-gray-600"}
                         `}
                       >
                         {b.author}
@@ -273,9 +265,7 @@ export default function ReadingList() {
                           <div className="space-y-3">
                             <textarea
                               value={notesDraft}
-                              onChange={(e) =>
-                                setNotesDraft(e.target.value)
-                              }
+                              onChange={(e) => setNotesDraft(e.target.value)}
                               rows={3}
                               className={`
                                 w-full rounded-md border px-3 py-2 text-sm
@@ -316,7 +306,8 @@ export default function ReadingList() {
                         ) : (
                           <div className="flex justify-between items-center">
                             <p className="max-w-md">
-                              {entry.notes || "No notes yet. Add your thoughts."}
+                              {entry.notes ||
+                                "No notes yet. Add your thoughts."}
                             </p>
 
                             <button

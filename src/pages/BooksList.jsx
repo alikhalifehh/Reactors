@@ -93,7 +93,7 @@ export default function BooksList() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      theme === "dark" ? "bg-zinc-950 text-white" : "bg-gray-50 text-black"
+      theme === "dark" ? "bg-[#140404] text-white" : "bg-[#FFFCE0] text-black"
     }`}>
       <Navbar />
 
@@ -162,8 +162,8 @@ export default function BooksList() {
                 onClick={() => navigate(`/books/${b._id}`)}
                 className={`rounded-xl shadow-lg p-5 flex flex-col transition cursor-pointer ${
                   theme === "dark"
-                    ? "bg-zinc-900 hover:bg-zinc-800 border border-zinc-800"
-                    : "bg-white hover:bg-gray-50 border border-gray-200"
+                    ? "bg-zinc-700 hover:bg-zinc-800 border border-zinc-800"
+                    : "bg-[#BAAE93] hover:bg-gray-50 border border-gray-200"
                 }`}
               >
                 {/* COVER */}

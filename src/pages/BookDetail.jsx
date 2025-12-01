@@ -82,6 +82,7 @@ export default function BookDetail() {
       await userBooksApi.create({
         bookId: book._id,
         status: "wishlist",
+        coverImage: book.coverImage,
       });
       alert("Added to your reading list");
     } catch (err) {
@@ -109,7 +110,8 @@ export default function BookDetail() {
     : null;
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-zinc-950 text-white" : "bg-gray-50 text-black"}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${theme === "dark" ?  "bg-[#140404] text-white"
+            : "bg-[#FFFCE0] text-black"}`}>
       <Navbar />
 
       <main className="max-w-6xl mx-auto pt-24 pb-20 px-4 sm:px-6 space-y-10">
@@ -123,8 +125,8 @@ export default function BookDetail() {
         {/* MAIN INFO BLOCK */}
         <section className={`rounded-3xl shadow-2xl overflow-hidden transition-colors ${
           theme === "dark" 
-            ? "bg-zinc-900 border border-zinc-800" 
-            : "bg-white border border-gray-200"
+            ? "bg-[#1e293b] border border-zinc-800" 
+            : "bg-gray-200 border border-gray-200"
         }`}>
           <div className="grid grid-cols-1 md:grid-cols-[290px,1fr]">
             {/* COVER IMAGE */}

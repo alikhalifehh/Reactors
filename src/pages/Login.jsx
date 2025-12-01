@@ -391,7 +391,7 @@ export default function Login() {
     <>
       <Navbar />
       <main className={`min-h-screen flex items-center justify-center pt-24 px-4 transition-colors duration-300 ${
-        theme === "dark" ? "bg-zinc-950" : "bg-gray-100"
+        theme === "dark" ?  "bg-[#1e293b]" : "bg-[#BAAE93]"
       }`}>
         <section className={`w-full max-w-md rounded-2xl shadow-lg p-8 ${
           theme === "dark" ? "bg-zinc-900 text-white" : "bg-white text-black"
